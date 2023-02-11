@@ -1,0 +1,84 @@
+[server]
+
+[file_manager]
+queue_gcode_uploads = True
+enable_object_processing = True
+enable_inotify_warnings = True
+
+[database]
+
+[data_store]
+temperature_store_size = 1200
+gcode_store_size = 1000
+
+[job_queue]
+load_on_startup = True
+
+[history]
+
+[timelapse]
+
+[power Printer]
+type = homeassistant
+address = 192.168.88.111
+port = 8123
+device = switch.print_power
+token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3OTMzNzE5ODM3ZjA0NzI4OGI3M2MyMjYyM2VkYzMzNyIsImlhdCI6MTY3NTI1NTAzNywiZXhwIjoxOTkwNjE1MDM3fQ.IPcXYr2l2p88I3sX7Jrx_7eSQIbu7hPBLIRtFrI9kzg
+domain = switch
+on_when_job_queued = True
+locked_while_printing = True
+restart_klipper_when_powered = True
+restart_delay = 1.
+
+[power Heater_BED]
+type = homeassistant
+address = 192.168.88.111
+port = 8123
+device = switch.heater_bed_power
+token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3OTMzNzE5ODM3ZjA0NzI4OGI3M2MyMjYyM2VkYzMzNyIsImlhdCI6MTY3NTI1NTAzNywiZXhwIjoxOTkwNjE1MDM3fQ.IPcXYr2l2p88I3sX7Jrx_7eSQIbu7hPBLIRtFrI9kzg
+domain = switch
+off_when_shutdown = True
+off_when_shutdown_delay = 0
+on_when_job_queued = True
+locked_while_printing = True
+
+[update_manager]
+enable_auto_refresh = True
+refresh_interval = 24
+enable_system_updates = True
+enable_packagekit = True
+channel = dev
+
+[update_manager mainsail]
+type = web
+channel = beta
+path = ~/mainsail
+repo = mainsail-crew/mainsail
+
+[update_manager timelapse]
+type = git_repo
+primary_branch = main
+path = ~/moonraker-timelapse
+origin = https://github.com/mainsail-crew/moonraker-timelapse.git
+managed_services = klipper moonraker
+
+[update_manager crowsnest]
+type = git_repo
+path = ~/crowsnest
+origin = https://github.com/mainsail-crew/crowsnest.git
+install_script = tools/install.sh
+
+[update_manager print_area_bed_mesh]
+type = git_repo
+path = ~/print_area_bed_mesh
+origin = https://github.com/Turge08/print_area_bed_mesh.git
+is_system_service = False
+
+[update_manager KlipperScreen]
+type = git_repo
+path = ~/KlipperScreen
+origin = https://github.com/jordanruthe/KlipperScreen.git
+env = ~/.KlipperScreen-env/bin/python
+requirements = scripts/KlipperScreen-requirements.txt
+install_script = scripts/KlipperScreen-install.sh
+

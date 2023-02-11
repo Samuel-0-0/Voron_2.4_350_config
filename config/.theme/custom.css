@@ -1,0 +1,318 @@
+/*
+This is a dark theme for mainsail.
+It is inspired by the DRACULA theme.
+
+Website:        https://draculatheme.com
+GitHub:         https://github.com/dracula
+
+DRACULA COLOR PALETTE
+    Background:  #282a36;
+    CurrentLine: #44475a;
+    Foreground:  #f8f8f2;
+    Comment:     #6272a4;
+    Cyan:        #8be9fd;
+    Green:       #50fa7b;
+    LightGreen:  #8aff80;
+    Orange:      #ffb86c;
+    Pink:        #ff79c6;
+    Purple:      #bd93f9;
+    Red:         #ff5555;
+    Yellow:      #f1fa8c;
+*/
+
+:root {
+    --Primary:        #bd93f9;    /*Dracula:Purple*/
+    --Secondary:      #44475a;    /*Dracula:CurrentLine*/
+    --Green:          #50fa7b;    /*Dracula:Green*/
+    --Red:            #ff5555;    /*Dracula:Red*/
+    --Warnings:       #ffb86c;    /*Dracula:Orange*/
+    --Text:           #f8f8f2;    /*Dracula:Foreground*/
+    --DarkerText:     #f5f5f2;    
+    --Background:     #44475a;    /*Dracula:CurrentLine*/
+    --DarkBackground: #282a36;    /*Dracula:Background*/
+    --Toolbars:       #44475a;    /*Dracula:CurrentLine*/
+    --Sheets:         #282a36;    /*Dracula:Background*/
+}
+.v-application {
+    --v-primary-base: var(--Primary) !important;
+    --v-anchor-base:  var(--Primary) !important;
+    --v-error-base:   var(--Red) !important;
+    --v-success-base: var(--Green) !important;
+    --v-warning-base: var(--Warnings) !important;
+    --v-panel-base:   var(--DarkBackground) !important;
+}
+
+
+/* Change Color of text */
+.v-btn__content .v-toolbar__title {
+    color: var(--Text) !important;
+}
+.text--darken-2 {
+    color: var(--Text) !important;
+}
+.subheading {
+    color: var(--Text) !important;
+}
+.theme--dark.v-icon, .v-btn__content, .v-text-field__suffix {
+    color: var(--Text) !important;
+}
+.theme--dark.v-input, .theme--dark.v-input input, .theme--dark.v-input textarea {
+    color: var(--Text) !important;
+}
+
+
+/* Change Primary color */
+.v-application .primary {
+    background-color: var(--Primary) !important;
+    border-color: var(--Primary) !important;
+}
+.v-application .primary--text {
+    color: var(--Primary) !important;
+    caret-color: var(--Primary) !important;
+}
+.v-application .blue--text {
+    color: var(--Primary) !important;
+    caret-color: var(--Primary) !important;
+}
+.v-application .info {
+    background-color: var(--Primary) !important;
+    border-color: var(--Primary) !important;
+}
+.v-text-field.v-text-field--solo:not(.v-text-field--solo-flat)>.v-input__control>.v-input__slot:focus-within {
+    border: thin solid var(--Primary) !important;
+}
+.v-text-field.v-text-field--solo .v-input__control input {
+    caret-color: var(--Primary);
+}
+.theme--dark.v-color-picker .v-color-picker__input input {
+    border: thin solid var(--Primary);
+    color: var(--Text);
+}
+
+
+/* Change Secondary color */
+.v-application .secondary {
+    background-color: var(--Secondary) !important;
+    border-color: var(--Secondary) !important;
+}
+.theme--dark.v-chip {
+    color: var(--Text) !important;
+    background-color: var(--Secondary) !important;
+}
+
+
+/* Change Background and Toolbars */
+body {
+    background-color: var(--Background);
+}
+.v-sheet {
+    border-color: var(--Background);
+}
+
+
+/* Darkest Color / Grey darkend */
+
+.theme--dark.v-application {
+    background: var(--DarkBackground);
+    color: var(--Text);
+}
+.v-application .grey.darken-3 {
+    background-color: var(--DarkBackground) !important;
+    border-color: var(--DarkBackground) !important;
+}
+.theme--dark.v-text-field--solo>.v-input__control>.v-input__slot {
+    background: var(--DarkBackground) !important;
+}
+.theme--dark.v-data-table {
+    background-color: var(--DarkBackground) !important;
+}
+.v-data-table>.v-data-table__wrapper>table  {
+    background-color: var(--DarkBackground) !important;
+}
+.theme--dark.v-btn.v-btn--has-bg {
+    background-color: var(--DarkBackground);
+}
+.theme--dark.v-tabs>.v-tabs-bar {
+    background-color: var(--DarkBackground);
+}
+
+
+/* Sheets - such as "Controls" or "Temperatures */
+.theme--dark.v-sheet {
+    background-color: var(--Sheets);
+}
+.v-toolbar__content, .v-toolbar__extension {
+    background-color: var(--Toolbars);
+    box-shadow: 0 5px 10px 0 rgb(0 0 0 / 15%);
+}
+
+
+/* vCard and subtitle Text Color */
+.theme--dark.v-card .v-card__subtitle, .theme--dark.v-card>.v-card__text {
+    color: var(--DarkerText);
+}
+
+
+/* green elements */
+.v-application .green--text {
+    color: var(--Green) !important;
+    caret-color: var(--Green) !important;
+}
+.v-application .green {
+    background-color: var(--Green) !important;
+    border-color: var(--Green) !important;
+}
+.v-application .green--text.text--darken-1 {
+    color: var(--Green) !important;
+    caret-color: var(--Green) !important;
+}
+.v-toast__item--success{
+    background-color: var(--Green) !important;
+    color: #000 !important;
+}
+
+
+/* warnings and orange elements */
+.v-application button.warning {
+    background: var(--Warnings) !important;
+    background-color: var(--Warnings) !important;
+    border-color: var(--Warnings) !important;
+}
+.theme--dark.warning--text {
+    color: var(--Warnings) !important;
+}
+.v-toast__item--warning{
+    background-color: var(--Warnings) !important;
+}
+.v-application .orange {
+    background: var(--Warnings) !important;
+    background-color: var(--Warnings) !important;
+}
+
+
+/* red elements */
+.v-application .red {
+    background-color: var(--Red) !important;
+    border-color: var(--Red) !important;
+}
+.v-application .red--text.text--darken-1 {
+    color: var(--Red) !important;
+    caret-color: var(--Red) !important;
+}
+.v-application .red--text {
+    color: var(--Red) !important;
+    caret-color: var(--Red) !important;
+}
+.v-application .error {
+    background-color: var(--Red) !important;
+    border-color: var(--Red) !important;
+}
+.v-toast__item--error{
+    background-color: var(--Red) !important;
+}
+
+/* Buttons */
+.v-btn-toggle>.v-btn.v-btn {
+    opacity: 1;
+}
+.theme--dark.v-btn--active:before {
+    opacity: 1;
+    background-color: var(--Toolbars) !important;
+}
+.theme--dark.v-btn.v-btn--disabled.v-btn--has-bg {
+    opacity: 1;
+    background-color: var(--Toolbars) !important;
+}
+.v-btn--disabled span.v-btn__content {
+    color: hsla(0,0%,100%,.3)!important
+}
+
+/*
+    CHANGE content of icons
+    Material Desgin Icons can be found on https://pictogrammers.github.io/@mdi/font/5.2.45/
+*/
+
+/* Thermometer to Flask */
+.mdi-thermometer-lines:before {
+    content: "\F0828";
+}
+/* Heatbed to Flames */
+.mdi-radiator-disabled:before {
+    content: "\F0238";
+    color: var(--Text);
+}
+/* Nozzle to Saw */
+.mdi-printer-3d-nozzle:before {
+    content: "\F0E22";
+    color: var(--Text);
+}
+/* Snowflake to Reactory */
+.mdi-snowflake:before {
+    content: "\F0708";
+}
+/* Controls to Infected Hand */
+.mdi-gamepad:before {
+    content: "\F1258";
+}
+/* Home to Castle */
+.mdi-home:before {
+    content: "\F011A";
+}
+/* "Cog"/Gearwheel to Spider */
+.mdi-cog:before {
+    content: "\F11EA";
+}
+/* Dipswitch to Bloodbag */
+.mdi-dip-switch:before {
+    content: "\F0CEC";
+}
+/* Code-Tags to Spider-web */
+.mdi-code-tags:before {
+    content: "\F0BCA";
+}
+/* Information to Thunderbolt */
+.mdi-information:before {
+    content: "\F140C";
+}
+/* Fan to Knife */
+.mdi-fan:before {
+    content: "\F09FB";
+}
+/* Connection to magnet */
+.mdi-connection:before {
+    content: "\F0348";
+}
+/*Statistics to snake */ 
+.mdi-chart-areaspline:before {
+    content: "\F150E";
+}
+/* history to sparklies */
+.mdi-history:before {
+    content: "\F1545";
+}
+/* gcode-files */
+.mdi-file-document-multiple-outline:before {
+    content: "\F0E22";
+}
+
+/* MDI
+mdi-bat: F0B5F
+mdi-knife: F09FB
+mdi-blood-bag: F0CEC
+mdi-castle: F011A
+mdi-fire: F0238
+mdi-flask-outline: F0096
+mdi-flask-round-bottom: F124B
+mdi-allergy: F1258
+mdi-circular-saw: F0E22
+mdi-cigar: F1189
+mdi-hot-tub: F0828
+mdi-react: F0708
+mdi-spider-thread: F11EB
+mdi-spider-web: F0BCA
+mdi-spider: F11EA
+mdi-lightning-bolt-outline: F140C
+mdi-magnet-on: F0348
+mdi-snake: F150E
+mdi-bone: F00B9
+*/
