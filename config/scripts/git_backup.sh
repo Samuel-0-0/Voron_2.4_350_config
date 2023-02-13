@@ -6,7 +6,7 @@
 ### the listed folders, just keep that line commented out.        ###
 #####################################################################
 ### Path to your config folder you want to backup
-config_folder=~/printer_data/config
+config_folder=~/printer_data
 
 ### Path to your Klipper folder, by default that is '~/klipper'
 klipper_folder=~/klipper
@@ -60,7 +60,7 @@ grab_version(){
 
 push_config(){
   cd $config_folder
-  echo Pushing updates
+  echo Pushing updates ...
   #从远程仓库拉取更新
   git pull -v
   #合并
