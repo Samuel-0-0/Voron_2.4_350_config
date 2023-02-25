@@ -20,17 +20,19 @@ default=$(echo -en "\e[39m")
 #######################################################################
 TOOLHEAD_BOARD=/dev/serial/by-id/usb-Klipper_stm32f072xb_3F0048001651524138383120-if00
 MAIN_BOARD=/dev/serial/by-id/usb-Klipper_stm32f446xx_29001000095053424E363420-if00
-STM_FLASH_DEVICE=0483:df11
 EBB_UUID=
 OCTOPUS_UUID=fea6ca620740
 VAST_UUID=ea733e4b9026
 #######################################################################
 ###      更新VAST打印头板
 #######################################################################
-function update_vast {
+function update_vast_can {
     echo -e ""
     echo -e "${yellow}开始更新 VAST 打印头控制板${default}"
     echo -e ""
+    if [ ! -d "CanBoot" ]; then
+        git clone https://github.com/Arksine/CanBoot.git
+    fi
     cp -f ~/printer_data/config/scripts/vast-stm072/vast-stm072_can_500K.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
@@ -40,7 +42,8 @@ function update_vast {
     read -e -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
     echo -e ""
     #make flash KCONFIG_CONFIG=~/printer_data/config/scripts/vast-stm072/vast-stm072_usb.config FLASH_DEVICE=$TOOLHEAD_BOARD
-    python3 ~/klipper/lib/canboot/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $VAST_UUID
+    python3 ~/CanBoot/scripts/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $VAST_UUID
+    #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $VAST_UUID
     if [ $? -eq 0 ]
     then
         echo -e ""
@@ -59,10 +62,13 @@ function update_vast {
 #######################################################################
 ###      用CANBOOT方式更新必趣EBB v1.1打印头板
 #######################################################################
-function update_ebb {
+function update_ebb_can {
     echo -e ""
     echo -e "${yellow}开始更新 EBB 打印头控制板${default}"
     echo -e ""
+    if [ ! -d "CanBoot" ]; then
+        git clone https://github.com/Arksine/CanBoot.git
+    fi
     cp -f ~/printer_data/config/scripts/btt-ebb-g0/can_500K.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
@@ -71,7 +77,8 @@ function update_ebb {
     echo -e ""
     read -e -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
     echo -e ""
-    python3 ~/klipper/lib/canboot/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $EBB_UUID
+    python3 ~/CanBoot/scripts/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $EBB_UUID
+    #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $EBB_UUID
     if [ $? -eq 0 ]
     then
         echo -e ""
@@ -88,13 +95,16 @@ function update_ebb {
 }
 
 #######################################################################
-###   使用DFU方式更新使用CAN BRIDGE固件的
+###   使用CAN方式更新使用CAN BRIDGE固件的
 ###   BigTreeTech OctoPus Pro v1.0(STM32F446)
 #######################################################################
 function update_octopus_canbus {
     echo -e ""
     echo -e "${yellow}开始更新 BigTreeTech OctoPus Pro v1.0(STM32F446)${default}"
     echo -e ""
+    if [ ! -d "CanBoot" ]; then
+        git clone https://github.com/Arksine/CanBoot.git
+    fi
     cp -f ~/printer_data/config/scripts/btt-octopus-pro-446/can_bridge_500K.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
@@ -104,8 +114,12 @@ function update_octopus_canbus {
     read -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
     echo -e ""
     python3 ~/CanBoot/scripts/flash_can.py -i can0 -u $OCTOPUS_UUID -r
-    #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -u $OCTOPUS_UUID -r #klipper未同步更新，更新后使用此
-    make flash FLASH_DEVICE=$STM_DFU_DEVICE #通常是0483:df11
+    #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -u $OCTOPUS_UUID -r
+    # 等待10秒
+    sleep 10 &
+    wait
+    # 进入DFU模式后的设备FLASH_DEVICE通常是0483:df11
+    make flash FLASH_DEVICE=0483:df11
     if [ $? -eq 0 ]
     then
         echo -e ""
@@ -128,8 +142,7 @@ function update_octopus_dfu {
     echo -e ""
     echo -e "${yellow}开始更新 BigTreeTech OctoPus Pro v1.0(STM32F446)${default}"
     echo -e ""
-    #cp -f ~/klipper_config/scripts/btt-octopus-pro-446/normal.config ~/klipper/.config
-    cp -f ~/printer_data/config/scripts/btt-octopus-pro-446/can_bridge_500K.config ~/klipper/.config
+    cp -f ~/klipper_config/scripts/btt-octopus-pro-446/normal.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
     make clean
@@ -137,8 +150,8 @@ function update_octopus_dfu {
     echo -e ""
     read -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
     echo -e ""
-    #make flash FLASH_DEVICE=$MAIN_BOARD
-    make flash FLASH_DEVICE=0483:df11
+    make flash FLASH_DEVICE=$MAIN_BOARD
+    #make flash FLASH_DEVICE=0483:df11
     if [ $? -eq 0 ]
     then
         echo -e ""
@@ -193,7 +206,6 @@ function stop_service {
     echo -e "${yellow}正在停止klipper服务..."
     sudo service klipper stop
     echo -e "完成${default}"
-    cd ~/klipper
 }
 #######################################################################
 ###      启动klipper服务
@@ -213,9 +225,9 @@ function start_service {
 ###      执行的操作
 #######################################################################
 stop_service
-#update_vast
-#update_ebb
-#update_octopus_canbus
-update_octopus_dfu
+update_vast_can
+#update_ebb_can
+update_octopus_canbus
+#update_octopus_dfu
 #update_octopus_sdcard
 start_service
