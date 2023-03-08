@@ -115,6 +115,9 @@ function update_octopus_canbus {
     echo -e ""
     python3 ~/CanBoot/scripts/flash_can.py -i can0 -u $OCTOPUS_UUID -r
     #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -u $OCTOPUS_UUID -r
+    echo -e ""
+    echo -e "${red}CAN BRIDGE固件的主板进DFU需要一点点时间，为了保险一点，请耐心等待10秒。${default}"
+    echo -e ""
     # 等待10秒
     sleep 10 &
     wait

@@ -34,6 +34,8 @@ token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3OTMzNzE5ODM3ZjA0NzI4OGI
 domain = switch
 on_when_job_queued = True
 locked_while_printing = True
+restart_klipper_when_powered = True
+restart_delay = 1.
 bound_services = klipper
 
 [power AC_BED]
