@@ -227,8 +227,8 @@ EOF
     [ -f /etc/nginx/sites-enabled/mainsail ] && sudo rm /etc/nginx/sites-enabled/mainsail \
     && sudo ln -s /etc/nginx/sites-available/mainsail /etc/nginx/sites-enabled/
     unzip -o ${MAINSAIL_DIR}/mainsail.zip -d ${MAINSAIL_DIR} && rm ${MAINSAIL_DIR}/mainsail.zip
-    [ -f ${MAINSAIL_DIR}/config.json ] && rm ${MAINSAIL_DIR}/config.json && \
-    ln -sf ~/printer_data/config/mainsail_config.json ${MAINSAIL_DIR}/config.json
+#    [ -f ${MAINSAIL_DIR}/config.json ] && rm ${MAINSAIL_DIR}/config.json && \
+#    ln -sf ~/printer_data/config/mainsail_config.json ${MAINSAIL_DIR}/config.json
     sudo systemctl restart nginx
 }
 
