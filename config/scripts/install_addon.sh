@@ -143,8 +143,8 @@ function install_print_area_bed_mesh {
 
 cd ~
 sudo apt-get update
-install_input_shaper
-install_gcode_shell_command
-install_timelapse
-install_print_area_bed_mesh
-install_crowsnest
+install_input_shaper               # 加速度测试必须依赖
+install_gcode_shell_command        # 通过GCode执行sh脚本必须依赖
+install_timelapse                  # 延时摄影必须依赖
+install_print_area_bed_mesh        # 区域床网测试必须依赖
+install_crowsnest                  # 使用摄像头必须依赖

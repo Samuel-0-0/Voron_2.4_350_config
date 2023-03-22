@@ -15,29 +15,16 @@ KLIPPER_CONFIG=${PRINTER_DATA}/config/printer.cfg
 KLIPPER_LOG=${PRINTER_DATA}/logs/klippy.log
 KLIPPER_SOCKET=/tmp/klippy_uds
 
-pre_download()
-{
-    report_status "获取Klipper文件..."
-    git clone https://github.com/KevinOConnor/klipper.git ${KLIPPER_DIR}
-    report_status "获取Moonraker文件..."
-    git clone https://github.com/Arksine/moonraker.git ${MOONRAKER_DIR}
-    report_status "获取KlipperScreen文件..."
-    git clone https://github.com/jordanruthe/KlipperScreen.git ${KLIPPERSCREEN_DIR}
-    [ ! -d ${MAINSAIL_DIR} ] && mkdir ${MAINSAIL_DIR}
-    report_status "获取Mainsail文件..."
-    wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://ghproxy.com/https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
-}
-
 pre_setup()
 {
-    report_status "设置国内PYPI阿里云镜像源..."
+    report_status "设置国内PYPI清华镜像源..."
     [ ! -d ${HOME}/.pip ] && mkdir ${HOME}/.pip
     sudo /bin/sh -c "cat > ${HOME}/.pip/pip.conf" << EOF
 [global]
-index-url = http://mirrors.aliyun.com/pypi/simple
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
 
 [install]
-trusted-host=mirrors.aliyun.com
+trusted-host=pypi.tuna.tsinghua.edu.cn
 
 EOF
     report_status "配置用户组..."
@@ -57,6 +44,8 @@ EOF
 # 步骤1: 安装Klipper
 install_klipper()
 {
+    report_status "获取Klipper文件..."
+    git clone https://github.com/KevinOConnor/klipper.git ${KLIPPER_DIR}
     # Packages for python cffi
     PKGLIST="python3-virtualenv python3-dev libffi-dev build-essential"
     # kconfig requirements
@@ -116,6 +105,8 @@ EOF
 # 步骤2: 安装Moonraker
 install_moonraker()
 {
+    report_status "获取Moonraker文件..."
+    git clone https://github.com/Arksine/moonraker.git ${MOONRAKER_DIR}
     report_status "安装Moonraker..."
     source ${MOONRAKER_DIR}/scripts/install-moonraker.sh
     source ${MOONRAKER_DIR}/scripts/set-policykit-rules.sh
@@ -124,6 +115,9 @@ install_moonraker()
 # 步骤3: 安装Mainsail
 install_mainsail()
 {
+    report_status "获取Mainsail文件..."
+    [ ! -d ${MAINSAIL_DIR} ] && mkdir ${MAINSAIL_DIR}
+    wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://ghproxy.com/https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
     report_status "安装Mainsail..."
     sudo apt-get install --yes nginx
 
@@ -258,7 +252,16 @@ install_addon()
     source ${PRINTER_DATA}/config/scripts/install_addon.sh
 }
 
-# 步骤6: 启动Klipper
+# 步骤6: 安装KlipperScreen
+install_KlipperScreen()
+{
+    report_status "获取KlipperScreen文件..."
+    git clone https://github.com/jordanruthe/KlipperScreen.git ${KLIPPERSCREEN_DIR}
+    report_status "安装KlipperScreen..."
+    source ${KLIPPERSCREEN_DIR}/scripts/KlipperScreen-install.sh
+}
+
+# 步骤7: 启动Klipper
 start_software()
 {
     report_status "启动Klipper..."
@@ -286,11 +289,11 @@ set -e
 SRCDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 
 # Run installation steps defined above
-verify_ready
-pre_download
-pre_setup
-install_klipper
-install_moonraker
-install_mainsail
-configure_can_interface
-install_addon
+verify_ready                        # 必须
+pre_setup                           # 必须
+install_klipper                     # 必须
+install_moonraker                   # 必须
+install_mainsail                    # WEB界面，可选
+configure_can_interface             # 如果需要使用CAN工具板，必须
+install_addon                       # 安装额外插件，可选
+#install_KlipperScreen               # 触摸屏控制界面，可选
