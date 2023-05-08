@@ -18,7 +18,7 @@ moonraker_folder=~/moonraker
 mainsail_folder=~/mainsail
 
 ### Path to your Fluidd folder, by default that is '~/fluidd'
-#fluidd_folder=~/fluidd
+fluidd_folder=~/fluidd
 
 #####################################################################
 #####################################################################
@@ -32,7 +32,7 @@ grab_version(){
     echo -n "Getting klipper version="
     cd "$klipper_folder"
     klipper_commit=$(git rev-parse --short=7 HEAD)
-    m1="Klipper on commit: $klipper_commit"
+    m1="Klipper: $klipper_commit"
     echo $klipper_commit
     cd ..
   fi
@@ -40,20 +40,20 @@ grab_version(){
     echo -n "Getting moonraker version="
     cd "$moonraker_folder"
     moonraker_commit=$(git rev-parse --short=7 HEAD)
-    m2="Moonraker on commit: $moonraker_commit"
+    m2="Moonraker: $moonraker_commit"
     echo $moonraker_commit
     cd ..
   fi
   if [ ! -z "$mainsail_folder" ]; then
     echo -n "Getting mainsail version="
     mainsail_ver=$(head -n 1 $mainsail_folder/.version)
-    m3="Mainsail version: $mainsail_ver"
+    m3="Mainsail: $mainsail_ver"
     echo $mainsail_ver
   fi
   if [ ! -z "$fluidd_folder" ]; then
     echo -n "Getting fluidd version="
     fluidd_ver=$(head -n 1 $fluidd_folder/.version)
-    m4="Fluidd version: $fluidd_ver"
+    m4="Fluidd: $fluidd_ver"
     echo $fluidd_ver
   fi
 }
@@ -67,7 +67,7 @@ push_config(){
   git add . -v
   current_date=$(date +"%Y-%m-%d %T")
   read -p "Content:" babala
-  git commit -m "$babala/$m1/$m2/$m3/$m4"
+  git commit -m "$babala[$m1,$m2,$m3,$m4]"
   git push
 }
 
