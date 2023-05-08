@@ -1,38 +1,23 @@
 #!/bin/bash
 
-
-#####################################################################
-### Please set the paths accordingly. In case you don't have all  ###
-### the listed folders, just keep that line commented out.        ###
-#####################################################################
-### Path to your config folder you want to backup
+### 需要备份的文件夹
 config_folder=~/printer_data
 
-### Path to your Klipper folder, by default that is '~/klipper'
+### Klipper文件夹位置，默认'~/klipper'
 klipper_folder=~/klipper
 
-### Path to your Moonraker folder, by default that is '~/moonraker'
+### Moonraker文件夹位置，默认'~/moonraker'
 moonraker_folder=~/moonraker
 
-### Path to your Mainsail folder, by default that is '~/mainsail'
+### Mainsail文件夹位置，默认'~/mainsail'
 mainsail_folder=~/mainsail
 
-### Path to your Fluidd folder, by default that is '~/fluidd'
-fluidd_folder=~/fluidd
-
-#####################################################################
-#####################################################################
-
-
-#####################################################################
-################ !!! DO NOT EDIT BELOW THIS LINE !!! ################
-#####################################################################
 grab_version(){
   if [ ! -z "$klipper_folder" ]; then
     echo -n "Getting klipper version="
     cd "$klipper_folder"
     klipper_commit=$(git rev-parse --short=7 HEAD)
-    m1="Klipper: $klipper_commit"
+    m1="Klipper:$klipper_commit"
     echo $klipper_commit
     cd ..
   fi
@@ -40,21 +25,15 @@ grab_version(){
     echo -n "Getting moonraker version="
     cd "$moonraker_folder"
     moonraker_commit=$(git rev-parse --short=7 HEAD)
-    m2="Moonraker: $moonraker_commit"
+    m2="Moonraker:$moonraker_commit"
     echo $moonraker_commit
     cd ..
   fi
   if [ ! -z "$mainsail_folder" ]; then
     echo -n "Getting mainsail version="
     mainsail_ver=$(head -n 1 $mainsail_folder/.version)
-    m3="Mainsail: $mainsail_ver"
+    m3="Mainsail:$mainsail_ver"
     echo $mainsail_ver
-  fi
-  if [ ! -z "$fluidd_folder" ]; then
-    echo -n "Getting fluidd version="
-    fluidd_ver=$(head -n 1 $fluidd_folder/.version)
-    m4="Fluidd: $fluidd_ver"
-    echo $fluidd_ver
   fi
 }
 
@@ -66,8 +45,8 @@ push_config(){
   #合并
   git add . -v
   current_date=$(date +"%Y-%m-%d %T")
-  read -p "Content:" babala
-  git commit -m "$babala[$m1,$m2,$m3,$m4]"
+  read -p "更新说明:" babala
+  git commit -m "$babala[$m1,$m2,$m3]"
   git push
 }
 
