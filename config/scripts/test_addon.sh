@@ -1,7 +1,7 @@
 #!/bin/bash
 
 [ $(id -u) -eq 0 ] || [ "$EUID" -eq 0 ] && whiptail --title '/!\ 警告 - 不要以ROOT身份运行 /!\' --msgbox "  请不要以ROOT身份或者SUDO运行本脚本！
-在需要的时候，脚本会请求权限" 8 48  && exit 1
+  在需要的时候，脚本会请求相应的权限。" 8 48  && exit 1
 
 ### 自定义打印信息颜色
 green=$(echo -en "\e[92m")
