@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[ $(id -u) -eq 0 || "$EUID" -eq 0 ] && whiptail --title '/!\ WARNING - Not runned as root /!\' --msgbox "	You don't run this as root!
+[ $(id -u) -eq 0 ] || [ "$EUID" -eq 0 ] && whiptail --title '/!\ WARNING - Not runned as root /!\' --msgbox "	You don't run this as root!
 You will need to have root permissions" 8 48
 
 ### 自定义打印信息颜色
