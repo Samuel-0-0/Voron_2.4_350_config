@@ -104,37 +104,6 @@ function install_print_area_bed_mesh() {
     fi
 }
 
-# klipper_z_calibration，用于自动Z偏移
-function install_klipper_z_calibration() {
-    if [ -d "klipper_z_calibration" ]; then
-        rm -rf klipper_z_calibration
-    fi
-    git clone https://github.com/protoloft/klipper_z_calibration.git
-    if [ $? -eq 0 ]
-    then
-        echo -e ""
-        echo -e "${green}klipper_z_calibration下载完成，开始安装...${default}"
-        echo -e ""
-    else
-        echo -e ""
-        echo -e "${red}klipper_z_calibration下载失败，详情请查看上方信息${default}"
-        echo -e ""
-        exit 1
-    fi
-    ./klipper_z_calibration/install.sh
-    if [ $? -eq 0 ]
-    then
-        echo -e ""
-        echo -e "${green}klipper_z_calibration安装完成${default}"
-        echo -e ""
-    else
-        echo -e ""
-        echo -e "${red}klipper_z_calibration安装失败，详情请查看上方信息${default}"
-        echo -e ""
-        exit 1
-    fi
-}
-
 # gcode_shell_command，用于在gcode中执行shell脚本
 function install_gcode_shell_command() {
     #cp ~/klipper_config/scripts/gcode_shell_command.py ~/klipper/klippy/extras/
@@ -170,50 +139,19 @@ function install_input_shaper() {
     fi
 }
 
-# python2的Klipper中文名Gcode文件支持
-function klipper_gcode_chinese() {
-    rm ~/klipper/klippy/gcode.pyc && sed -i "/import os, re, logging, collections, shlex/a import sys\nreload(sys)\nsys.setdefaultencoding('utf8')" ~/klipper/klippy/gcode.py && cat ~/klipper/klippy/gcode.py | head -n 10
-    if [ $? -eq 0 ]
-    then
-        echo -e ""
-        echo -e "${green}Klipper中文名Gcode文件支持设置完成${default}"
-        echo -e ""
-    else
-        echo -e ""
-        echo -e "${red}Klipper中文名Gcode文件支持设置失败，详情请查看上方信息${default}"
-        echo -e ""
-        exit 1
-    fi
-}
-
-# mainsail主题
-function install_mainsail_theme() {
-    git clone https://github.com/steadyjaw/dracula-mainsail-theme.git ~/klipper_config/.theme
-    if [ $? -eq 0 ]
-    then
-        echo -e ""
-        echo -e "${green}主题下载完成${default}"
-        echo -e ""
-    else
-        echo -e ""
-        echo -e "${red}文件下载失败，详情请查看上方信息${default}"
-        echo -e ""
-        exit 1
-    fi
-}
 
 function Checklist() {
     CHOICES=$(
-        whiptail --title "Klipper使用优化助手" \
-            --ok-button "确定" --cancel-button "取消" --checklist \
-            "关于下述可选项目的说明：\n1) Gcode Shell Command是可以执行shell脚本的klipper插件\n    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md\n2) Timelapse是Moonraker的第三方延时摄影插件\n    使用文档：https://github.com/mainsail-crew/moonraker-timelapse\n3) Klipper Z Calibration是配合Klicky等使用实现自动Z偏移调整的Klipper插件\n    使用文档：https://github.com/protoloft/klipper_z_calibration\n4) Print Area Bed Mesh是辅助实现区域床网的Klipper脚本\n    使用文档：https://github.com/Turge08/print_area_bed_mesh\n5) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖\n    使用文档：https://www.klipper3d.org/Measuring_Resonances.html\n6) Crowsnest是一个帮助更好的管理和使用摄像头的服务\n    使用文档：https://github.com/mainsail-crew/crowsnest\n7) 只有基于Python2的Klipper才需要中文名Gcode文件支持\n\n请选择需要的项目（方向上下选择，空格选中取消，TAP键切换）：" 30 100 7 \
-            "1" "Gcode Shell Command - 执行Shell插件" ON \
-            "2" "Timelapse - 延时摄影" OFF \
-            "3" "Klipper Z Calibration - 自动Z调整" OFF \
-            "4" "Print Area Bed Mesh - 区域床网" OFF \
-            "5" "Input Shaper - 加速度测试依赖" OFF \
-            "6" "Crowsnest - 摄像头服务" OFF \
-            "7" "Klipper中文名Gcode文件支持" OFF \
+        whiptail --title "Klipper助手" \
+            --ok-button "开始安装" --cancel-button "退出助手" --checklist \
+            "关于下述可选项目的说明：\n1) Klipper是控制3D打印机必须的组件，使用文档：https://www.klipper3d.org/\n   Moonraker是一个用于与Klipper通信的API服务，使用文档：https://moonraker.readthedocs.io/en/latest/2) Mainsail是一个WEBUI界面，用于控制Klipper\n    使用文档：https://docs.mainsail.xyz/\n3) Gcode Shell Command是可以执行shell脚本的klipper插件\n    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md\n4) Print Area Bed Mesh是辅助实现区域床网的Klipper脚本\n    使用文档：https://github.com/Turge08/print_area_bed_mesh\n5) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖\n    使用文档：https://www.klipper3d.org/Measuring_Resonances.html\n6) Crowsnest是一个帮助更好的管理和使用摄像头的服务\n    使用文档：https://github.com/mainsail-crew/crowsnest\n7) Timelapse是Moonraker的第三方延时摄影插件\n    使用文档：https://github.com/mainsail-crew/moonraker-timelapse\n\n请选择需要的项目（方向上下选择，空格选中取消，TAP键切换）：" 30 100 7 \
+            "1" "Klipper及Moonraker - 必须的组件" ON \
+            "2" "Mainsail - WEBUI" ON \
+            "3" "Gcode Shell Command - 执行Shell插件" ON \
+            "4" "Print Area Bed Mesh - 区域床网" ON \
+            "5" "Input Shaper - 加速度测试依赖" ON \
+            "6" "Crowsnest - 摄像头服务" ON \
+            "7" "Timelapse - 延时摄影" ON \
             3>&1 1>&2 2>&3)
     exitstatus=$?
     if [ $exitstatus = 0 ]; then
@@ -244,10 +182,10 @@ echo '
                                   
 '
 
-if (whiptail --title "Klipper使用优化助手" --yes-button "确认" --no-button "退出"  --yesno "本助手将帮助安装一些在Klipper使用过程中比较实用的插件/辅助优化，部分操作可能需要手动修改配置文件，操作过程中会有提示。选择确认继续。" 10 60) then
+if (whiptail --title "Klipper助手" --yes-button "继续" --no-button "再考虑一下"  --yesno "本助手将帮助安装Klipper/Moonraker/Mainsail以及实用的插件及辅助优化。是否继续？" 10 60) then
     Checklist
 else
     exit 0
 fi
 
-whiptail --title "祝贺" --msgbox "恭喜你优化完成了！" --ok-button "好的" 10 60
+whiptail --title "祝贺" --msgbox "恭喜安装完成了！" --ok-button "你退下吧" 10 60
