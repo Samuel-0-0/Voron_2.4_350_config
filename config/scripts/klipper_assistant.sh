@@ -32,42 +32,6 @@ function report_status {
 ### 遇到错误强制退出
 set -e
 
-### 主菜单
-function Checklist {
-    CHOICES=$(
-        whiptail --title "Klipper助手" \
-            --ok-button "开始安装" --cancel-button "退出助手" --checklist \
-            "关于下述可选项目的说明：\n1) Klipper是控制3D打印机必须的组件，使用文档：https://www.klipper3d.org/\n   Moonraker是一个用于与Klipper通信的API服务，使用文档：https://moonraker.readthedocs.io/en/latest/\n2) Mainsail是一个用于控制Klipper的WEBUI界面\n    使用文档：https://docs.mainsail.xyz/\n3) KlipperScreen是一个用于控制Klipper的触摸屏界面\n    使用文档：https://klipperscreen.readthedocs.io/en/latest/\n4) Gcode Shell Command是可以执行shell脚本的klipper插件\n    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md\n5) Print Area Bed Mesh是辅助实现区域床网的Klipper脚本\n    使用文档：https://github.com/Turge08/print_area_bed_mesh\n6) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖\n    使用文档：https://www.klipper3d.org/Measuring_Resonances.html\n7) Crowsnest是一个帮助更好的管理和使用摄像头的服务\n    使用文档：https://github.com/mainsail-crew/crowsnest\n8) Timelapse是Moonraker的第三方延时摄影插件\n    使用文档：https://github.com/mainsail-crew/moonraker-timelapse\n\n请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：" 32 105 8 \
-            "1" "Klipper及Moonraker - 必须的组件" ON \
-            "2" "Mainsail - WEBUI控制界面" ON \
-            "3" "KlipperScreen - 触摸屏控制界面" ON \
-            "4" "Gcode Shell Command - 执行Shell插件" ON \
-            "5" "Print Area Bed Mesh - 区域床网" ON \
-            "6" "Input Shaper - 加速度测试依赖" ON \
-            "7" "Crowsnest - 摄像头服务" ON \
-            "8" "Timelapse - 延时摄影" ON \
-            3>&1 1>&2 2>&3)
-    exitstatus=$?
-    if [ $exitstatus = 0 ]; then
-        CHOICES=$(sed  's/\"//g' <<<$CHOICES)
-        for PACKAGE in $CHOICES; do
-            case $PACKAGE in
-            1) pre_setup && install_klipper && install_moonraker && configure_can_interface ;;
-            2) install_mainsail ;;
-            3) install_KlipperScreen ;;
-            4) install_gcode_shell_command ;;
-            5) install_print_area_bed_mesh ;;
-            6) install_input_shaper ;;
-            7) install_crowsnest ;;
-            8) install_timelapse ;;
-            esac
-        done
-    else
-        #echo "You chose Cancel."
-        exit 0
-    fi
-}
-
 ### 预处理
 function pre_setup {
     report_status "设置国内PYPI清华镜像源..."
@@ -359,6 +323,43 @@ echo '
   ╚═══╝  ╚═╝  ╚═╝╚══════╝   ╚═╝   
                                   
 '
+
+### 主菜单
+function Checklist {
+    CHOICES=$(
+        whiptail --title "Klipper助手" \
+            --ok-button "开始安装" --cancel-button "退出助手" --checklist \
+            "关于下述可选项目的说明：\n1) Klipper是控制3D打印机必须的组件，使用文档：https://www.klipper3d.org/\n   Moonraker是一个用于与Klipper通信的API服务，使用文档：https://moonraker.readthedocs.io/en/latest/\n2) Mainsail是一个用于控制Klipper的WEBUI界面\n    使用文档：https://docs.mainsail.xyz/\n3) KlipperScreen是一个用于控制Klipper的触摸屏界面\n    使用文档：https://klipperscreen.readthedocs.io/en/latest/\n4) Gcode Shell Command是可以执行shell脚本的klipper插件\n    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md\n5) Print Area Bed Mesh是辅助实现区域床网的Klipper脚本\n    使用文档：https://github.com/Turge08/print_area_bed_mesh\n6) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖\n    使用文档：https://www.klipper3d.org/Measuring_Resonances.html\n7) Crowsnest是一个帮助更好的管理和使用摄像头的服务\n    使用文档：https://github.com/mainsail-crew/crowsnest\n8) Timelapse是Moonraker的第三方延时摄影插件\n    使用文档：https://github.com/mainsail-crew/moonraker-timelapse\n\n请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：" 32 105 8 \
+            "1" "Klipper及Moonraker - 必须的组件" ON \
+            "2" "Mainsail - WEBUI控制界面" OFF \
+            "3" "KlipperScreen - 触摸屏控制界面" OFF \
+            "4" "Gcode Shell Command - 执行Shell插件" ON \
+            "5" "Print Area Bed Mesh - 区域床网" ON \
+            "6" "Input Shaper - 加速度测试依赖" ON \
+            "7" "Crowsnest - 摄像头服务" ON \
+            "8" "Timelapse - 延时摄影" ON \
+            3>&1 1>&2 2>&3)
+    exitstatus=$?
+    if [ $exitstatus = 0 ]; then
+        CHOICES=$(sed  's/\"//g' <<<$CHOICES)
+        for PACKAGE in $CHOICES; do
+            case $PACKAGE in
+            1) pre_setup && install_klipper && install_moonraker && configure_can_interface ;;
+            2) install_mainsail ;;
+            3) install_KlipperScreen ;;
+            4) install_gcode_shell_command ;;
+            5) install_print_area_bed_mesh ;;
+            6) install_input_shaper ;;
+            7) install_crowsnest ;;
+            8) install_timelapse ;;
+            esac
+        done
+    else
+        #echo "You chose Cancel."
+        exit 0
+    fi
+}
+
 ### 欢迎界面
 if (whiptail --title "Klipper助手" --yes-button "继续" --no-button "再考虑一下"  --yesno "本助手将帮助安装Klipper/Moonraker/Mainsail以及实用的插件及辅助优化。是否继续？" 10 60) then
     Checklist
