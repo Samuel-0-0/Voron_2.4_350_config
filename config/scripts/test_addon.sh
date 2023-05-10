@@ -1,5 +1,8 @@
 #!/bin/bash
 
+[ $(id -u) != 0 ] && whiptail --title '/!\ WARNING - Not runned as root /!\' --msgbox "	You don't run this as root!
+You will need to have root permissions" 8 48
+
 ### 自定义打印信息颜色
 green=$(echo -en "\e[92m")
 yellow=$(echo -en "\e[93m")
