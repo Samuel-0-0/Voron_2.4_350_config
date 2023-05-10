@@ -32,13 +32,6 @@ function report_status {
 ### 遇到错误强制退出
 set -e
 
-### 欢迎界面
-if (whiptail --title "Klipper助手" --yes-button "继续" --no-button "再考虑一下"  --yesno "本助手将帮助安装Klipper/Moonraker/Mainsail以及实用的插件及辅助优化。是否继续？" 10 60) then
-    Checklist
-else
-    exit 0
-fi
-
 ### 主菜单
 function Checklist {
     CHOICES=$(
@@ -74,19 +67,6 @@ function Checklist {
         exit 0
     fi
 }
-
-echo '
-██╗   ██╗ █████╗ ███████╗████████╗
-██║   ██║██╔══██╗██╔════╝╚══██╔══╝
-██║   ██║███████║███████╗   ██║   
-╚██╗ ██╔╝██╔══██║╚════██║   ██║   
- ╚████╔╝ ██║  ██║███████║   ██║   
-  ╚═══╝  ╚═╝  ╚═╝╚══════╝   ╚═╝   
-                                  
-'
-
-### 结束
-whiptail --title "祝贺" --msgbox "恭喜安装完成了！" --ok-button "你退下吧" 10 60
 
 ### 预处理
 function pre_setup {
@@ -369,3 +349,22 @@ function install_print_area_bed_mesh {
     git clone https://github.com/Turge08/print_area_bed_mesh.git
     ln -sf ~/print_area_bed_mesh/print_area_bed_mesh.cfg ~/printer_data/config/print_area_bed_mesh.cfg
 }
+
+echo '
+██╗   ██╗ █████╗ ███████╗████████╗
+██║   ██║██╔══██╗██╔════╝╚══██╔══╝
+██║   ██║███████║███████╗   ██║   
+╚██╗ ██╔╝██╔══██║╚════██║   ██║   
+ ╚████╔╝ ██║  ██║███████║   ██║   
+  ╚═══╝  ╚═╝  ╚═╝╚══════╝   ╚═╝   
+                                  
+'
+### 欢迎界面
+if (whiptail --title "Klipper助手" --yes-button "继续" --no-button "再考虑一下"  --yesno "本助手将帮助安装Klipper/Moonraker/Mainsail以及实用的插件及辅助优化。是否继续？" 10 60) then
+    Checklist
+else
+    exit 0
+fi
+
+### 结束界面
+whiptail --title "祝贺" --msgbox "恭喜安装完成了！" --ok-button "你退下吧" 10 60
