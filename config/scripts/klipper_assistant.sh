@@ -294,7 +294,7 @@ function install_timelapse {
 ### gcode_shell_command，用于在gcode中执行shell脚本
 function install_gcode_shell_command {
     report_status "安装gcode_shell_command..."
-    ln -sf ~/printer_data/config/scripts/gcode_shell_command.py ~/klipper/klippy/extras/gcode_shell_command.py
+    wget -q -O ~/klipper/klippy/extras/gcode_shell_command.py https://ghproxy.com/https://raw.githubusercontent.com/th33xitus/kiauh/master/resources/gcode_shell_command.py
 }
 
 ### 加速度测试所需依赖
