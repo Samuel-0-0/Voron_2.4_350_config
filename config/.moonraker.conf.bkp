@@ -16,7 +16,7 @@ load_on_startup = True
 [authorization]
 trusted_clients = 
 	127.0.0.0/8
-	172.18.0.5
+	172.17.0.17
 	192.168.88.0/24
 force_logins = False
 
