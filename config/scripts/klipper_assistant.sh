@@ -275,7 +275,7 @@ function install_crowsnest {
     fi
     git clone --recurse-submodules https://github.com/mainsail-crew/crowsnest.git
     #sed -i 's/61ab2a8/dde2190/g' ~/crowsnest/bin/Makefile
-    sed -i 's|https://github.com|https://ghproxy.com/https://github.com|g' ~/crowsnest/bin/Makefile
+    #sed -i 's|https://github.com|https://ghproxy.com/https://github.com|g' ~/crowsnest/bin/Makefile
     #sed -i 's/v0.20.2/v0.21.2/g' ~/crowsnest/bin/rtsp-simple-server/version
     pushd ~/crowsnest && sudo make install
     popd
