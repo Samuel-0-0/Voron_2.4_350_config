@@ -23,6 +23,7 @@ MAIN_BOARD=/dev/serial/by-id/usb-Klipper_stm32f446xx_29001000095053424E363420-if
 EBB_UUID=
 OCTOPUS_UUID=fea6ca620740
 VAST_UUID=ea733e4b9026
+
 #######################################################################
 ###      更新VAST打印头板
 #######################################################################
@@ -33,7 +34,7 @@ function update_vast_can {
     if [ ! -d "CanBoot" ]; then
         git clone https://github.com/Arksine/CanBoot.git
     fi
-    cp -f ~/printer_data/config/scripts/vast-stm072/vast-stm072_can_500K.config ~/klipper/.config
+    cp -f ~/printer_data/config/scripts/vast-stm32f072/VAST_STM32F072_CAN_1M.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
     make clean
@@ -69,7 +70,7 @@ function update_ebb_can {
     if [ ! -d "CanBoot" ]; then
         git clone https://github.com/Arksine/CanBoot.git
     fi
-    cp -f ~/printer_data/config/scripts/btt-ebb-g0/can_500K.config ~/klipper/.config
+    cp -f ~/printer_data/config/scripts/btt-ebb-g0/V1.1_CAN_1M.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
     make clean
@@ -105,7 +106,7 @@ function update_octopus_canbus {
     if [ ! -d "CanBoot" ]; then
         git clone https://github.com/Arksine/CanBoot.git
     fi
-    cp -f ~/printer_data/config/scripts/btt-octopus-pro-446/can_bridge_500K.config ~/klipper/.config
+    cp -f ~/printer_data/config/scripts/btt-octopus-pro-446/CAN_Bridge_1M.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
     make clean
@@ -171,37 +172,6 @@ function update_octopus_dfu {
 }
 
 #######################################################################
-###  使用flash sdcard方式更新 BigTreeTech OctoPus Pro v1.0(STM32F446)
-#######################################################################
-function update_octopus_sdcard {
-    echo -e ""
-    echo -e "${yellow}开始更新 BigTreeTech OctoPus Pro v1.0(STM32F446)${default}"
-    echo -e ""
-    make clean
-    #make menuconfig KCONFIG_CONFIG=~/klipper_config/script/btt-octopus-pro-446.config
-    make KCONFIG_CONFIG=~/klipper_config/script/btt-octopus-pro-446.config
-    echo -e ""
-    read -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
-    echo -e ""
-    # 查看支持的设备执行 cd ~/klipper && ./scripts/flash-sdcard.sh -l
-    ./scripts/flash-sdcard.sh $MAIN_BOARD
-    echo -e ""
-    read -p "${yellow}固件更新完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
-    echo -e ""
-    if [ $? -eq 0 ]
-    then
-        echo -e ""
-        echo -e "${green}已完成固件更新${default}"
-        echo -e ""
-    else
-        echo -e ""
-        echo -e "${red}固件更新失败，详情请查看上方信息${default}"
-        echo -e ""
-        exit 1
-    fi
-}
-
-#######################################################################
 ###      停止klipper服务
 #######################################################################
 function stop_service {
@@ -210,6 +180,7 @@ function stop_service {
     sudo service klipper stop
     echo -e "完成${default}"
 }
+
 #######################################################################
 ###      启动klipper服务
 #######################################################################
@@ -223,14 +194,12 @@ function start_service {
     echo -e ""
 }
 
-
 #######################################################################
 ###      执行的操作
 #######################################################################
 stop_service
-update_vast_can
-#update_ebb_can
 update_octopus_canbus
 #update_octopus_dfu
-#update_octopus_sdcard
+update_vast_can
+#update_ebb_can
 start_service

@@ -250,7 +250,7 @@ function configure_can_interface {
         sudo /bin/sh -c  "cat > /etc/network/interfaces.d/can0" << EOF
 allow-hotplug can0
 iface can0 can static
-  bitrate 500000
+  bitrate 1000000
   up /sbin/ifconfig can0 txqueuelen 1024
 
 EOF
