@@ -1,5 +1,10 @@
 #!/bin/bash
 
+################################################################
+# 快速使用：
+# cd ~ && wget -q -O  ~/klipper_assistant.sh https://ghproxy.com/https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/klipper_assistant.sh && chmod +x klipper_assistant.sh && ./klipper_assistant.sh
+################################################################
+
 ### ROOT检测
 [ $(id -u) -eq 0 ] || [ "$EUID" -eq 0 ] && whiptail --title '/!\ 警告 - 不要以ROOT身份运行 /!\' --msgbox "  请不要以ROOT身份或者SUDO运行本脚本！
   在需要的时候，脚本会请求相应的权限。" 8 48  && exit 1
