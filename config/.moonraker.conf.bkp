@@ -65,6 +65,12 @@ channel = beta
 path = ~/mainsail
 repo = mainsail-crew/mainsail
 
+[update_manager CanBoot]
+type = git_repo
+origin = https://github.com/Arksine/CanBoot.git
+path = ~/CanBoot
+is_system_service = False
+
 [update_manager timelapse]
 type = git_repo
 primary_branch = main

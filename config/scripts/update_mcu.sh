@@ -31,9 +31,6 @@ function update_vast_can {
     echo -e ""
     echo -e "${yellow}开始更新 VAST 打印头控制板${default}"
     echo -e ""
-    if [ ! -d "CanBoot" ]; then
-        git clone https://github.com/Arksine/CanBoot.git
-    fi
     cp -f ~/printer_data/config/scripts/vast-stm32f072/VAST_STM32F072_CAN_1M.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
@@ -67,9 +64,6 @@ function update_ebb_can {
     echo -e ""
     echo -e "${yellow}开始更新 EBB 打印头控制板${default}"
     echo -e ""
-    if [ ! -d "CanBoot" ]; then
-        git clone https://github.com/Arksine/CanBoot.git
-    fi
     cp -f ~/printer_data/config/scripts/btt-ebb-g0/V1.1_CAN_1M.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
@@ -103,9 +97,6 @@ function update_octopus_canbus {
     echo -e ""
     echo -e "${yellow}开始更新 BigTreeTech OctoPus Pro v1.0(STM32F446)${default}"
     echo -e ""
-    if [ ! -d "CanBoot" ]; then
-        git clone https://github.com/Arksine/CanBoot.git
-    fi
     cp -f ~/printer_data/config/scripts/btt-octopus-pro-446/CAN_Bridge_1M.config ~/klipper/.config
     pushd ~/klipper
     make olddefconfig
@@ -117,10 +108,10 @@ function update_octopus_canbus {
     python3 ~/CanBoot/scripts/flash_can.py -i can0 -u $OCTOPUS_UUID -r
     #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -u $OCTOPUS_UUID -r
     echo -e ""
-    echo -e "${red}CAN BRIDGE固件的主板进DFU需要一点点时间，为了保险一点，请耐心等待10秒。${default}"
+    echo -e "${red}CAN BRIDGE固件的主板进DFU需要一点点时间，为了保险一点，请耐心等待15秒。${default}"
     echo -e ""
-    # 等待10秒
-    sleep 10 &
+    # 等待15秒
+    sleep 15 &
     wait
     # 进入DFU模式后的设备FLASH_DEVICE通常是0483:df11
     make flash FLASH_DEVICE=0483:df11
@@ -197,6 +188,10 @@ function start_service {
 #######################################################################
 ###      执行的操作
 #######################################################################
+if [ ! -d "CanBoot" ]; then
+    git clone https://github.com/Arksine/CanBoot.git
+fi
+
 stop_service
 update_octopus_canbus
 #update_octopus_dfu
