@@ -239,7 +239,7 @@ EOF
 
     [ -f /etc/nginx/sites-enabled/default ] && sudo rm /etc/nginx/sites-enabled/default
     [ -f /etc/nginx/sites-enabled/mainsail ] && sudo rm /etc/nginx/sites-enabled/mainsail \
-    && sudo ln -s /etc/nginx/sites-available/mainsail /etc/nginx/sites-enabled/
+    && sudo ln -s /etc/nginx/sites-available/mainsail /etc/nginx/sites-enabled/mainsail
     unzip -o ${MAINSAIL_DIR}/mainsail.zip -d ${MAINSAIL_DIR} && rm ${MAINSAIL_DIR}/mainsail.zip
 #    [ -f ${MAINSAIL_DIR}/config.json ] && rm ${MAINSAIL_DIR}/config.json && \
 #    ln -sf ~/printer_data/config/mainsail_config.json ${MAINSAIL_DIR}/config.json
@@ -293,7 +293,7 @@ function install_timelapse {
         rm -rf moonraker-timelapse
     fi
     git clone https://github.com/mainsail-crew/moonraker-timelapse.git
-    ./moonraker-timelapse/install.sh -c ~/printer_data/config
+    ./moonraker-timelapse/scripts/install.sh -c ~/printer_data/config
 }
 
 ### gcode_shell_command，用于在gcode中执行shell脚本
