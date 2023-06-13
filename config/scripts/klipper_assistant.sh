@@ -5,6 +5,9 @@
 # cd ~ && wget -q -O  ~/klipper_assistant.sh https://ghproxy.com/https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/klipper_assistant.sh && chmod +x klipper_assistant.sh && ./klipper_assistant.sh
 ################################################################
 
+### 遇到错误强制退出
+set -e
+
 ### ROOT检测
 [ $(id -u) -eq 0 ] || [ "$EUID" -eq 0 ] && whiptail --title '/!\ 警告 - 不要以ROOT身份运行 /!\' --msgbox "  请不要以ROOT身份或者SUDO运行本脚本！
   在需要的时候，脚本会请求相应的权限。" 8 48  && exit 1
@@ -19,9 +22,10 @@ MOONRAKER_DIR="${HOME}/moonraker"
 MAINSAIL_DIR="${HOME}/mainsail"
 KLIPPERSCREEN_DIR="${HOME}/KlipperScreen"
 PRINTER_DATA="${HOME}/printer_data"
-KLIPPER_CONFIG=${PRINTER_DATA}/config/printer.cfg
-KLIPPER_LOG=${PRINTER_DATA}/logs/klippy.log
-KLIPPER_SOCKET=/tmp/klippy_uds
+KLIPPER_ENV_FILE="${PRINTER_DATA}/systemd/klipper.env"
+KLIPPER_CONFIG="${PRINTER_DATA}/config/printer.cfg"
+KLIPPER_LOG="${PRINTER_DATA}/logs/klippy.log"
+KLIPPER_SOCKET="/tmp/klippy_uds"
 
 ### 打印消息颜色
 green=$(echo -en "\e[92m")
@@ -33,9 +37,6 @@ default=$(echo -en "\e[39m")
 function report_status {
     echo -e "\n\n${yellow}###### $1 ${default}"
 }
-
-### 遇到错误强制退出
-set -e
 
 ### 预处理
 function pre_setup {
@@ -97,13 +98,17 @@ function install_klipper {
 
     # Create systemd service file
     report_status "配置Klipper系统服务..."
+    # KLIPPER_ARGS="/home/samuel/klipper/klippy/klippy.py /home/samuel/printer_data/config/printer.cfg -l /home/samuel/printer_data/logs/klippy.log -a /tmp/klippy_uds"
+    sudo /bin/sh -c "cat > ${KLIPPER_ENV_FILE}" << EOF
+KLIPPER_ARGS="${KLIPPER_DIR}/klippy/klippy.py ${KLIPPER_CONFIG} -l ${KLIPPER_LOG} -a ${KLIPPER_SOCKET}"
+EOF
+
     sudo /bin/sh -c "cat > ${SYSTEMD_DIR}/klipper.service" << EOF
 #Systemd service file for klipper
 [Unit]
 Description=Starts Klipper and provides klippy Unix Domain Socket API
 Documentation=https://www.klipper3d.org/
-After=network.target
-Before=moonraker.service
+After=network-online.target
 Wants=udev.target
 
 [Install]
@@ -114,10 +119,11 @@ WantedBy=multi-user.target
 Type=simple
 User=${KLIPPER_USER}
 RemainAfterExit=yes
-ExecStart= ${KLIPPY_ENV_DIR}/bin/python ${KLIPPER_DIR}/klippy/klippy.py ${KLIPPER_CONFIG} -l ${KLIPPER_LOG} -a ${KLIPPER_SOCKET}
+EnvironmentFile=${KLIPPER_ENV_FILE}
+ExecStart= ${KLIPPY_ENV_DIR}/bin/python \$KLIPPER_ARGS
 Restart=always
 RestartSec=10
-
+Nice=-20
 EOF
     # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
@@ -130,7 +136,7 @@ function install_moonraker {
     git clone https://github.com/Arksine/moonraker.git ${MOONRAKER_DIR}
     report_status "安装Moonraker..."
     source ${MOONRAKER_DIR}/scripts/install-moonraker.sh
-    source ${MOONRAKER_DIR}/scripts/set-policykit-rules.sh
+    #source ${MOONRAKER_DIR}/scripts/set-policykit-rules.sh
 }
 
 ### 安装Mainsail
@@ -166,7 +172,7 @@ upstream mjpgstreamer4 {
 
 EOF
 
-sudo /bin/sh -c  "cat > /etc/nginx/conf.d/common_vars.conf" << EOF
+    sudo /bin/sh -c  "cat > /etc/nginx/conf.d/common_vars.conf" << EOF
 # /etc/nginx/conf.d/common_vars.conf
 map \$http_upgrade \$connection_upgrade {
     default upgrade;
@@ -175,7 +181,10 @@ map \$http_upgrade \$connection_upgrade {
 
 EOF
 
-sudo /bin/sh -c  "cat > /etc/nginx/sites-available/mainsail" << EOF
+    [ -f /etc/nginx/sites-enabled/default ] && sudo rm /etc/nginx/sites-enabled/default
+    [ -f /etc/nginx/sites-enabled/mainsail ] && sudo rm /etc/nginx/sites-enabled/mainsail
+    
+    sudo /bin/sh -c  "cat > /etc/nginx/sites-available/mainsail" << EOF
 # /etc/nginx/sites-available/mainsail
 server {
     listen 80 default_server;
@@ -237,9 +246,7 @@ server {
 
 EOF
 
-    [ -f /etc/nginx/sites-enabled/default ] && sudo rm /etc/nginx/sites-enabled/default
-    [ -f /etc/nginx/sites-enabled/mainsail ] && sudo rm /etc/nginx/sites-enabled/mainsail \
-    && sudo ln -s /etc/nginx/sites-available/mainsail /etc/nginx/sites-enabled/mainsail
+    sudo ln -s /etc/nginx/sites-available/mainsail /etc/nginx/sites-enabled/mainsail
     unzip -o ${MAINSAIL_DIR}/mainsail.zip -d ${MAINSAIL_DIR} && rm ${MAINSAIL_DIR}/mainsail.zip
 #    [ -f ${MAINSAIL_DIR}/config.json ] && rm ${MAINSAIL_DIR}/config.json && \
 #    ln -sf ~/printer_data/config/mainsail_config.json ${MAINSAIL_DIR}/config.json
