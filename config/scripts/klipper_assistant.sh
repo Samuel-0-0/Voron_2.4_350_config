@@ -300,7 +300,8 @@ function install_timelapse {
         rm -rf moonraker-timelapse
     fi
     git clone https://github.com/mainsail-crew/moonraker-timelapse.git
-    ./moonraker-timelapse/scripts/install.sh -c ~/printer_data/config
+    pushd ~/moonraker-timelapse && make install
+    popd
 }
 
 ### gcode_shell_command，用于在gcode中执行shell脚本

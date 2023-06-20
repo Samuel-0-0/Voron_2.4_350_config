@@ -25,6 +25,7 @@ force_logins = False
 
 [timelapse]
 output_path = ~/printer_data/timelapse/
+frame_path = /tmp/timelapse/printer
 
 [power Printer_power]
 type = homeassistant
