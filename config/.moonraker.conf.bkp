@@ -16,12 +16,16 @@ load_on_startup = True
 [authorization]
 trusted_clients = 
 	127.0.0.0/8
-	172.17.0.17
+	172.17.0.0/16
 	192.168.88.0/24
 	10.0.0.0/24
 force_logins = False
 
 [history]
+
+[spoolman]
+server = http://192.168.88.111:8088
+sync_rate = 5
 
 [timelapse]
 output_path = ~/printer_data/timelapse/
