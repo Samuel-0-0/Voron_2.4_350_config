@@ -317,14 +317,24 @@ function install_input_shaper {
     ~/klippy-env/bin/pip install -v numpy
 }
 
-### 区域床网
-function install_print_area_bed_mesh {
-    report_status "$安装print_area_bed_mesh..."
-    if [ -d "print_area_bed_mesh" ]; then
-        rm -rf print_area_bed_mesh
+### 自适应网床插件
+function install_adaptive_bed_mesh {
+    report_status "$安装自适应网床插件..."
+    if [ -d "klipper_adaptive_bed_mesh" ]; then
+        rm -rf klipper_adaptive_bed_mesh
     fi
-    git clone https://github.com/Turge08/print_area_bed_mesh.git
-    ln -sf ~/print_area_bed_mesh/print_area_bed_mesh.cfg ~/printer_data/config/print_area_bed_mesh.cfg
+    git clone https://github.com/eamars/klipper_adaptive_bed_mesh.git
+    source klipper_adaptive_bed_mesh/install.sh
+}
+
+### 无限位归零插件
+function install_sensorless_homing {
+    report_status "安装无限位归零插件..."
+    if [ -d "sensorless_homing_helper" ]; then
+        rm -rf sensorless_homing_helper
+    fi
+    git clone https://github.com/eamars/sensorless_homing_helper.git
+    source sensorless_homing_helper/install.sh
 }
 
 echo '
@@ -374,29 +384,31 @@ function Checklist {
     CHOICES=$(
         whiptail --title "Klipper助手" \
             --ok-button "开始安装" --cancel-button "退出助手" --checklist \
-            "关于下述可选项目的说明：\n1) Klipper是控制3D打印机必须的组件，使用文档：https://www.klipper3d.org/\n   Moonraker是一个用于与Klipper通信的API服务，使用文档：https://moonraker.readthedocs.io/en/latest/\n2) Mainsail是一个用于控制Klipper的WEBUI界面\n    使用文档：https://docs.mainsail.xyz/\n3) KlipperScreen是一个用于控制Klipper的触摸屏界面\n    使用文档：https://klipperscreen.readthedocs.io/en/latest/\n4) Gcode Shell Command是可以执行shell脚本的klipper插件\n    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md\n5) Print Area Bed Mesh是辅助实现区域床网的Klipper脚本\n    使用文档：https://github.com/Turge08/print_area_bed_mesh\n6) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖\n    使用文档：https://www.klipper3d.org/Measuring_Resonances.html\n7) Crowsnest是一个帮助更好的管理和使用摄像头的服务\n    使用文档：https://github.com/mainsail-crew/crowsnest\n8) Timelapse是Moonraker的第三方延时摄影插件\n    使用文档：https://github.com/mainsail-crew/moonraker-timelapse\n\n请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：" 32 105 8 \
-            "1" "Klipper及Moonraker - 必须的组件" ON \
-            "2" "Mainsail - WEBUI控制界面" OFF \
-            "3" "KlipperScreen - 触摸屏控制界面" OFF \
-            "4" "Gcode Shell Command - 执行Shell插件" ON \
-            "5" "Print Area Bed Mesh - 区域床网" ON \
-            "6" "Input Shaper - 加速度测试依赖" ON \
-            "7" "Crowsnest - 摄像头服务" ON \
-            "8" "Timelapse - 延时摄影" ON \
+            "关于下述可选项目的说明：\na) Klipper是控制3D打印机必须的组件，使用文档：https://www.klipper3d.org/\n   Moonraker是用来与Klipper通信的API服务，使用文档：https://moonraker.readthedocs.io/en/latest/\nb) Mainsail是用来控制Klipper的WEBUI界面\n    使用文档：https://docs.mainsail.xyz/\nc) KlipperScreen是用来控制Klipper的触摸屏界面\n    使用文档：https://klipperscreen.readthedocs.io/en/latest/\nd) Gcode Shell Command是Klipper用来执行shell脚本的插件\n    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md\ne) 自适应网床插件会根据切片动态生成床面网格参数，从而减少床网探测时间\n    使用文档：https://github.com/eamars/klipper_adaptive_bed_mesh/blob/main/readme_zh_cn.md\nf) 无限位归零插件在复刻了现有无限位归零宏的所有功能基础上增加了额外的功能\n    使用文档：https://github.com/eamars/sensorless_homing_helper/blob/main/readme_zh_cn.md\ng) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖\n    使用文档：https://www.klipper3d.org/Measuring_Resonances.html\nh) Crowsnest是用来管理和使用摄像头的服务\n    使用文档：https://github.com/mainsail-crew/crowsnest\ni) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制\n    使用文档：https://github.com/mainsail-crew/moonraker-timelapse\n\n注意：部分插件需要自行修改配置文件，请查看使用文档。\n\n请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：" 38 108 9 \
+            "a" "Klipper及Moonraker - 必须的组件" ON \
+            "b" "Mainsail - WEBUI控制界面" OFF \
+            "c" "KlipperScreen - 触摸屏控制界面" OFF \
+            "d" "Gcode Shell Command - 执行Shell插件" ON \
+            "e" "Adaptive Bed Mesh - 自适应网床插件" ON \
+            "f" "Sensorless Homing Helper - 无限位归零插件" OFF \
+            "g" "Input Shaper - 加速度测试依赖" ON \
+            "h" "Crowsnest - 摄像头服务" ON \
+            "i" "Timelapse - 延时摄影插件" ON \
             3>&1 1>&2 2>&3)
     exitstatus=$?
     if [ $exitstatus = 0 ]; then
         CHOICES=$(sed  's/\"//g' <<<$CHOICES)
         for PACKAGE in $CHOICES; do
             case $PACKAGE in
-            1) pre_setup && install_klipper && install_moonraker && configure_can_interface ;;
-            2) install_mainsail ;;
-            3) install_KlipperScreen ;;
-            4) install_gcode_shell_command ;;
-            5) install_print_area_bed_mesh ;;
-            6) install_input_shaper ;;
-            7) install_crowsnest ;;
-            8) install_timelapse ;;
+            a) pre_setup && install_klipper && install_moonraker && configure_can_interface ;;
+            b) install_mainsail ;;
+            c) install_KlipperScreen ;;
+            d) install_gcode_shell_command ;;
+            e) install_adaptive_bed_mesh ;;
+            f) install_sensorless_homing ;;
+            g) install_input_shaper ;;
+            h) install_crowsnest ;;
+            i) install_timelapse ;;
             esac
         done
     else
