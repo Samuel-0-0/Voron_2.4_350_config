@@ -12,7 +12,7 @@ mainsail_folder=~/mainsail
 ### 获取版本信息
 grab_version(){
   if [ ! -z "$klipper_folder" ]; then
-    echo -n "Getting klipper version="
+    echo -n "当前Klipper版本："
     cd "$klipper_folder"
     klipper_commit=$(git rev-parse --short=7 HEAD)
     m1="Klipper:$klipper_commit"
@@ -20,7 +20,7 @@ grab_version(){
     cd ..
   fi
   if [ ! -z "$moonraker_folder" ]; then
-    echo -n "Getting moonraker version="
+    echo -n "当前Moonraker版本："
     cd "$moonraker_folder"
     moonraker_commit=$(git rev-parse --short=7 HEAD)
     m2="Moonraker:$moonraker_commit"
@@ -28,7 +28,7 @@ grab_version(){
     cd ..
   fi
   if [ ! -z "$mainsail_folder" ]; then
-    echo -n "Getting mainsail version="
+    echo -n "当前Mainsail版本："
     mainsail_ver=$(head -n 1 $mainsail_folder/.version)
     m3="Mainsail:$mainsail_ver"
     echo $mainsail_ver
