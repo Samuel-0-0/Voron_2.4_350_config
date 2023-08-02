@@ -40,7 +40,7 @@ function update_vast_can {
     read -e -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
     echo -e ""
     #make flash KCONFIG_CONFIG=~/printer_data/config/scripts/vast-stm072/vast-stm072_usb.config FLASH_DEVICE=$TOOLHEAD_BOARD
-    python3 ~/CanBoot/scripts/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $VAST_UUID
+    python3 ~/katapult/scripts/flashtool.py -i can0 -f ~/klipper/out/klipper.bin -u $VAST_UUID
     #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $VAST_UUID
     if [ $? -eq 0 ]
     then
@@ -72,7 +72,7 @@ function update_ebb_can {
     echo -e ""
     read -e -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
     echo -e ""
-    python3 ~/CanBoot/scripts/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $EBB_UUID
+    python3 ~/katapult/scripts/flashtool.py -i can0 -f ~/klipper/out/klipper.bin -u $EBB_UUID
     #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u $EBB_UUID
     if [ $? -eq 0 ]
     then
@@ -91,7 +91,7 @@ function update_ebb_can {
 
 #######################################################################
 ###   使用CAN方式更新使用CAN BRIDGE固件的
-###   BigTreeTech OctoPus Pro v1.0(STM32F446)
+###   BigTreeTech OctoPus Pro v1.0(STM32F446 官方原版Bootloader)
 #######################################################################
 function update_octopus_canbus {
     echo -e ""
@@ -105,7 +105,7 @@ function update_octopus_canbus {
     echo -e ""
     read -p "${yellow}固件编译完成，请检查上面是否有错误。 按 [Enter] 继续更新固件，或者按 [Ctrl+C] 取消${default}"
     echo -e ""
-    python3 ~/CanBoot/scripts/flash_can.py -i can0 -u $OCTOPUS_UUID -r
+    python3 ~/katapult/scripts/flashtool.py -i can0 -u $OCTOPUS_UUID -r
     #python3 ~/klipper/lib/canboot/flash_can.py -i can0 -u $OCTOPUS_UUID -r
     echo -e ""
     echo -e "${red}CAN BRIDGE固件的主板进DFU需要一点点时间，为了保险一点，请耐心等待15秒。${default}"
@@ -188,8 +188,8 @@ function start_service {
 #######################################################################
 ###      执行的操作
 #######################################################################
-if [ ! -d "CanBoot" ]; then
-    git clone https://github.com/Arksine/CanBoot.git
+if [ ! -d "katapult" ]; then
+    git clone https://github.com/Arksine/katapult.git
 fi
 
 stop_service
