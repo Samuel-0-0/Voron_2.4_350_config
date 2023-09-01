@@ -380,11 +380,34 @@ echo '
 '
 
 ### 主菜单
-function Checklist {
+function Main_menu {
     CHOICES=$(
         whiptail --title "Klipper助手" \
-            --ok-button "开始安装" --cancel-button "退出助手" --checklist \
-            "关于下述可选项目的说明：\na) Klipper是控制3D打印机必须的组件，使用文档：https://www.klipper3d.org/\n   Moonraker是用来与Klipper通信的API服务，使用文档：https://moonraker.readthedocs.io/en/latest/\nb) Mainsail是用来控制Klipper的WEBUI界面\n    使用文档：https://docs.mainsail.xyz/\nc) KlipperScreen是用来控制Klipper的触摸屏界面\n    使用文档：https://klipperscreen.readthedocs.io/en/latest/\nd) Gcode Shell Command是Klipper用来执行shell脚本的插件\n    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md\ne) 自适应网床插件会根据切片动态生成床面网格参数，从而减少床网探测时间\n    使用文档：https://github.com/eamars/klipper_adaptive_bed_mesh/blob/main/readme_zh_cn.md\nf) 无限位归零插件在复刻了现有无限位归零宏的所有功能基础上增加了额外的功能\n    使用文档：https://github.com/eamars/sensorless_homing_helper/blob/main/readme_zh_cn.md\ng) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖\n    使用文档：https://www.klipper3d.org/Measuring_Resonances.html\nh) Crowsnest是用来管理和使用摄像头的服务\n    使用文档：https://github.com/mainsail-crew/crowsnest\ni) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制\n    使用文档：https://github.com/mainsail-crew/moonraker-timelapse\n\n注意：部分插件需要自行修改配置文件，请查看使用文档。\n\n请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：" 38 108 9 \
+            --ok-button "开始安装" --cancel-button "退出助手" --checklist "\
+关于下述可选项目的说明：
+a) Klipper是控制3D打印机必须的组件，使用文档：https://www.klipper3d.org
+    Moonraker是用来与Klipper通信的API服务，使用文档：https://moonraker.readthedocs.io/en/latest
+b) Mainsail是用来控制Klipper的WEBUI界面
+    使用文档：https://docs.mainsail.xyz
+c) KlipperScreen是用来控制Klipper的触摸屏界面
+    使用文档：https://klipperscreen.readthedocs.io/en/latest
+d) Gcode Shell Command是Klipper用来执行shell脚本的插件
+    使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md
+e) 自适应网床插件会根据切片动态生成床面网格参数，从而减少床网探测时间
+    使用文档：https://github.com/eamars/klipper_adaptive_bed_mesh/blob/main/readme_zh_cn.md
+f) 无限位归零插件在复刻了现有无限位归零宏的所有功能基础上增加了额外的功能
+    使用文档：https://github.com/eamars/sensorless_homing_helper/blob/main/readme_zh_cn.md
+g) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖
+    使用文档：https://www.klipper3d.org/Measuring_Resonances.html
+h) Crowsnest是用来管理和使用摄像头的服务
+    使用文档：https://github.com/mainsail-crew/crowsnest
+i) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
+    使用文档：https://github.com/mainsail-crew/moonraker-timelapse
+
+注意：部分插件需要自行修改配置文件，请查看使用文档。
+
+请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：\
+            " 38 108 9 \
             "a" "Klipper及Moonraker - 必须的组件" ON \
             "b" "Mainsail - WEBUI控制界面" OFF \
             "c" "KlipperScreen - 触摸屏控制界面" OFF \
@@ -419,7 +442,7 @@ function Checklist {
 
 ### 欢迎界面
 if (whiptail --title "Klipper助手" --yes-button "继续" --no-button "再考虑一下"  --yesno "本助手将帮助安装Klipper/Moonraker/Mainsail以及实用的插件及辅助优化。是否继续？" 10 60) then
-    Checklist
+    Main_menu
 else
     exit 0
 fi

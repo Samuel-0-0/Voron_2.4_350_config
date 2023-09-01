@@ -56,6 +56,20 @@ off_when_shutdown = True
 off_when_shutdown_delay = 1.
 locked_while_printing = True
 
+[mqtt]
+address = 192.168.88.111
+port = 1883
+mqtt_protocol = v3.1.1
+enable_moonraker_api = True
+instance_name = voron
+status_objects = 
+	webhooks
+	display_status
+	idle_timeout
+publish_split_status = False
+default_qos = 0
+api_qos = 0
+
 [octoprint_compat]
 
 [update_manager]
@@ -71,10 +85,10 @@ channel = beta
 path = ~/mainsail
 repo = mainsail-crew/mainsail
 
-[update_manager CanBoot]
+[update_manager katapult]
 type = git_repo
-origin = https://github.com/Arksine/CanBoot.git
-path = ~/CanBoot
+origin = https://github.com/Arksine/katapult.git
+path = ~/katapult
 is_system_service = False
 
 [update_manager timelapse]
@@ -88,13 +102,15 @@ managed_services = klipper moonraker
 type = git_repo
 path = ~/crowsnest
 origin = https://github.com/mainsail-crew/crowsnest.git
+managed_services = crowsnest
 install_script = tools/pkglist.sh
 
-[update_manager print_area_bed_mesh]
+[update_manager client klipper_adaptive_bed_mesh]
 type = git_repo
-path = ~/print_area_bed_mesh
-origin = https://github.com/Turge08/print_area_bed_mesh.git
-is_system_service = False
+primary_branch = main
+path = ~/klipper_adaptive_bed_mesh
+origin = https://github.com/eamars/klipper_adaptive_bed_mesh.git
+install_script = install.sh
 
 [update_manager KlipperScreen]
 type = git_repo
