@@ -68,7 +68,17 @@ status_objects =
 	idle_timeout
 publish_split_status = False
 default_qos = 0
-api_qos = 0
+
+[sensor mqtt_powermeter]
+type = mqtt
+name = Powermeter
+state_topic = test_power/status
+state_response_template = 
+	{% set notification = payload|fromjson %}
+	{set_result("power", notification["power"]|float)}
+	{set_result("voltage", notification["voltage"]|float)}
+	{set_result("current", notification["current"]|float)}
+	{set_result("energy", notification["energy"]["by_minute"][0]|float * 0.000001)}
 
 [octoprint_compat]
 
