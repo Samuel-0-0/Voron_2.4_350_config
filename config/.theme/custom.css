@@ -1,5 +1,5 @@
 body {
-    background-image: url('/server/files/config/.theme/background.jpg'), url('/server/files/config/.theme/background.png'), url('/server/files/config/.theme/background.gif'), url('/server/files/config/.fluidd-theme/background.jpg'), url('/server/files/config/.fluidd-theme/background.png'), url('/server/files/config/.fluidd-theme/background.gif');
+    background-image: url('/server/files/config/.theme/background.jpg'), url('/server/files/config/.theme/background.png'), url('/server/files/config/.theme/background.gif');
     background: rgb(0,48,73);
     background: linear-gradient(34deg, rgba(0,48,73,1) 0%, rgba(9,32,121,1) 35%, rgba(0,125,255,1) 100%);
     background-repeat: no-repeat;
