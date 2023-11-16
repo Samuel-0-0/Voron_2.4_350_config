@@ -15,7 +15,7 @@ Voron v2.4 r2 350mm
 ## 电气硬件
 * 上位机：Intel(R) Pentium(R) CPU N3710 @ 1.60GHz ~2GB 内存, 64GB SSD
 * 主板：BigTreeTech OctoPus Pro v1.0 *1
-* 打印头控制板：自制VAST broad with STM32F072 *1
+* 打印头控制板：[自制VAST sb-can](https://docs.529300529.xyz/vast/sb-can/) *1
 * XY驱动：BigTreeTech 5160 Pro v1.0 *2 @48V
 * Z驱动：FYETC S2209 v3.1 *4 @24V
 * 耗材检测：BigTreeTech Smart Filament Sensor *1

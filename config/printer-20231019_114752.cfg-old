@@ -133,7 +133,7 @@ unretract_speed: 35
 [include configs/probe.cfg]                         # Probe
 [include configs/filament.cfg]                      # 耗材检测、更换
 #[include configs/clean_nozzle.cfg]                  # 清洁喷嘴
-#[include configs/v0_display.cfg]                     # v0屏幕
+[include configs/v0_display.cfg]                     # v0屏幕
 #[include configs/mini12864.cfg]                     # mini12864屏幕
 #[include configs/beeper.cfg]                        # mini12864屏幕上的蜂鸣器
 [include configs/lights.cfg]                        # SB头灯光及顶部照明灯光
@@ -142,10 +142,7 @@ unretract_speed: 35
 #[include configs/drying.cfg]                        # 耗材烘干脚本
 # 以下文件由插件自动安装
 [include timelapse.cfg]                             # 延时摄影，需要在切片软件中的换层执行的命令中增加TIMELAPSE_TAKE_FRAME
-#[include mmu/base/*.cfg]                            # 多色系统 主程序
-#---[include mmu/optional/client_macros.cfg]         # 多色系统 用户宏，参考修改现有的同名宏，不要直接引用
-#[include mmu/optional/mmu_ercf_compat.cfg]          # 多色系统 兔子宏
-#[include mmu/optional/mmu_menu.cfg]                 # 多色系统 12864屏幕菜单
+
 
 ######################################################################
 ####                   以下为系统自动生成的配置                   ####

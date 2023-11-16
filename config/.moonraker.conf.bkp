@@ -149,3 +149,14 @@ requirements = scripts/KlipperScreen-requirements.txt
 install_script = scripts/KlipperScreen-install.sh
 managed_services = KlipperScreen
 
+[update_manager happy-hare]
+type = git_repo
+path = ~/Happy-Hare
+origin = https://github.com/moggieuk/Happy-Hare.git
+primary_branch = main
+install_script = install.sh
+managed_services = klipper
+
+[mmu_server]
+enable_file_preprocessor = False
+

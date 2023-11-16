@@ -15,7 +15,7 @@ def main():
     m3x8_rail_pitch = 40.
     m3x8_rail_end = 4.5
     
-    print("\nTradRack材料需求计算器\n")
+    print("\nTradRack材料需求计算器\n@Samuel Wang翻译\n")
     
     # get lane count
     lane_count = int(input("需要接入的耗材数量："))
@@ -30,11 +30,11 @@ def main():
     print("H型滑块最小轨道长度：{}".format(h_rail_len))
 
     # get rail cart type and corresponding minimum rail length
-    cart_type = input("\n打算购置的线轨滑块类型(c/h)：").lower()
+    cart_type = input("\n准备使用的线轨滑块类型(请输入c/h)：").lower()
     min_rail_len = c_rail_len if cart_type == "c" else h_rail_len
 
     # get rail length
-    rail_len_str = input("打算购置的线轨长度"
+    rail_len_str = input("准备使用的线轨长度"
                          "(默认使用最小值)：")
     rail_len = max(float(rail_len_str), min_rail_len) if rail_len_str \
         else min_rail_len
@@ -45,7 +45,7 @@ def main():
     if max_lane_count > lane_count:
         change_lane_count = input("此线轨长度允许最多{}"
                                   "路耗材。需要将耗材接入数量从{}增加到{}吗？"
-                                  "(y/n): ".format(max_lane_count, lane_count,
+                                  "(请输入y/n): ".format(max_lane_count, lane_count,
                                                    max_lane_count)).lower()
         if change_lane_count == "y":
             lane_count = max_lane_count
