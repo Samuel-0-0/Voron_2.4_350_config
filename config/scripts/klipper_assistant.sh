@@ -2,7 +2,7 @@
 
 ################################################################
 # 快速使用：
-# cd ~ && wget -q -O  ~/klipper_assistant.sh https://ghproxy.com/https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/klipper_assistant.sh && chmod +x klipper_assistant.sh && ./klipper_assistant.sh
+# cd ~ && wget -q -O  ~/klipper_assistant.sh https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/klipper_assistant.sh && chmod +x klipper_assistant.sh && ./klipper_assistant.sh
 ################################################################
 
 ### 遇到错误强制退出
@@ -337,6 +337,16 @@ function install_sensorless_homing {
     source sensorless_homing_helper/install.sh
 }
 
+### TMC驱动自动调谐插件
+function install_klipper_tmc_autotune {
+    report_status "安装TMC驱动自动调谐插件..."
+    if [ -d "klipper_tmc_autotune" ]; then
+        rm -rf klipper_tmc_autotune
+    fi
+    git clone https://github.com/andrewmcgr/klipper_tmc_autotune.git
+    source klipper_tmc_autotune/install.sh
+}
+
 echo '
 █████████████████████████████████████████████████████████
 █████████████████████████████████████████████████████████
@@ -403,11 +413,13 @@ h) Crowsnest是用来管理和使用摄像头的服务
     使用文档：https://github.com/mainsail-crew/crowsnest
 i) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
     使用文档：https://github.com/mainsail-crew/moonraker-timelapse
+j) TMC驱动自动调谐插件可以动态调整TMC驱动的相应参数，减轻运行噪音
+    使用文档：https://github.com/andrewmcgr/klipper_tmc_autotune
 
 注意：部分插件需要自行修改配置文件，请查看使用文档。
 
 请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：\
-            " 38 108 9 \
+            " 42 108 10 \
             "a" "Klipper及Moonraker - 必须的组件" ON \
             "b" "Mainsail - WEBUI控制界面" OFF \
             "c" "KlipperScreen - 触摸屏控制界面" OFF \
@@ -417,6 +429,7 @@ i) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
             "g" "Input Shaper - 加速度测试依赖" ON \
             "h" "Crowsnest - 摄像头服务" ON \
             "i" "Timelapse - 延时摄影插件" ON \
+            "j" "Klipper TMC Autotune - TMC驱动自动调谐插件" ON \
             3>&1 1>&2 2>&3)
     exitstatus=$?
     if [ $exitstatus = 0 ]; then
@@ -432,6 +445,7 @@ i) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
             g) install_input_shaper ;;
             h) install_crowsnest ;;
             i) install_timelapse ;;
+            j) install_klipper_tmc_autotune ;;
             esac
         done
     else
