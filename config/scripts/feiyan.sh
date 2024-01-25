@@ -1,9 +1,8 @@
 #!/bin/bash
 
-################################################################
-# 快速使用：
-# cd ~ && wget -q -O  ~/klipper_assistant.sh https://ghproxy.com/https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/klipper_assistant.sh && chmod +x klipper_assistant.sh && ./klipper_assistant.sh
-################################################################
+# Copyright (C) 2024 Samuel Wang <imhsaw@gmail.com>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license
 
 clear
 

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright (C) 2024 Samuel Wang <imhsaw@gmail.com>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license
+
 ### 需要备份的文件夹
 config_folder=~/printer_data
 ### Klipper文件夹位置，默认'~/klipper'
