@@ -23,13 +23,14 @@ trusted_clients =
 	FE80::/10
 	::1/128
 cors_domains = 
-	*://*.local
+	*.local
+	*.529300529.xyz:*
 force_logins = False
 
 [history]
 
 [spoolman]
-server = http://192.168.88.111:8088
+server = http://192.168.88.111:8089
 sync_rate = 5
 
 [timelapse]
@@ -132,14 +133,6 @@ path = ~/crowsnest
 origin = https://github.com/mainsail-crew/crowsnest.git
 managed_services = crowsnest
 install_script = tools/pkglist.sh
-
-[update_manager klipper_adaptive_bed_mesh]
-type = git_repo
-primary_branch = main
-path = ~/klipper_adaptive_bed_mesh
-origin = https://github.com/eamars/klipper_adaptive_bed_mesh.git
-managed_services = klipper
-install_script = install.sh
 
 [update_manager KlipperScreen]
 type = git_repo
