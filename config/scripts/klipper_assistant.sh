@@ -18,6 +18,7 @@ set -e
 
 ### 环境变量
 KLIPPY_ENV_DIR="${HOME}/klippy-env"
+MOONRAKER_ENV_DIR="${HOME}/moonraker-env"
 SYSTEMD_DIR="/etc/systemd/system"
 KLIPPER_DIR="${HOME}/klipper"
 KLIPPER_USER=${USER}
@@ -71,6 +72,12 @@ EOF
 ### 安装Klipper
 function install_klipper {
     report_status "获取Klipper文件..."
+    if [ -d ${KLIPPER_DIR} ]; then
+        rm -rf ${KLIPPER_DIR}
+    fi
+    if [ -d ${KLIPPY_ENV_DIR} ]; then
+        rm -rf ${KLIPPY_ENV_DIR}
+    fi
     git clone https://github.com/KevinOConnor/klipper.git ${KLIPPER_DIR}
     # Packages for python cffi
     PKGLIST="python3-virtualenv python3-dev libffi-dev build-essential"
@@ -137,6 +144,12 @@ EOF
 ### 安装Moonraker
 function install_moonraker {
     report_status "获取Moonraker文件..."
+    if [ -d ${MOONRAKER_DIR} ]; then
+        rm -rf ${MOONRAKER_DIR}
+    fi
+    if [ -d ${MOONRAKER_ENV_DIR} ]; then
+        rm -rf ${MOONRAKER_ENV_DIR}
+    fi
     git clone https://github.com/Arksine/moonraker.git ${MOONRAKER_DIR}
     report_status "安装Moonraker..."
     source ${MOONRAKER_DIR}/scripts/install-moonraker.sh
@@ -147,7 +160,7 @@ function install_moonraker {
 function install_mainsail {
     report_status "获取Mainsail文件..."
     [ ! -d ${MAINSAIL_DIR} ] && mkdir ${MAINSAIL_DIR}
-    wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://ghproxy.com/https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
+    wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://mirror.ghproxy.com/https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
     report_status "安装Mainsail..."
     sudo apt-get install --yes nginx
 
@@ -278,6 +291,9 @@ EOF
 ### 安装KlipperScreen
 function install_KlipperScreen {
     report_status "获取KlipperScreen文件..."
+    if [ -d "${KLIPPERSCREEN_DIR}" ]; then
+        rm -rf ${KLIPPERSCREEN_DIR}
+    fi
     git clone https://github.com/jordanruthe/KlipperScreen.git ${KLIPPERSCREEN_DIR}
     report_status "安装KlipperScreen..."
     source ${KLIPPERSCREEN_DIR}/scripts/KlipperScreen-install.sh
@@ -311,7 +327,7 @@ function install_timelapse {
 ### gcode_shell_command，用于在gcode中执行shell脚本
 function install_gcode_shell_command {
     report_status "安装gcode_shell_command..."
-    wget -q -O ~/klipper/klippy/extras/gcode_shell_command.py https://ghproxy.com/https://raw.githubusercontent.com/th33xitus/kiauh/master/resources/gcode_shell_command.py
+    wget -q -O ~/klipper/klippy/extras/gcode_shell_command.py https://mirror.ghproxy.com/https://raw.githubusercontent.com/th33xitus/kiauh/master/resources/gcode_shell_command.py
 }
 
 ### 加速度测试所需依赖
@@ -350,6 +366,16 @@ function install_klipper_tmc_autotune {
     git clone https://github.com/andrewmcgr/klipper_tmc_autotune.git
     source klipper_tmc_autotune/install.sh
 }
+
+### 一键升级klipper固件
+function install_lazyfirmware {
+    report_status "安装一键升级klipper固件脚本..."
+    if [ -d "LazyFirmware" ]; then
+        rm -rf LazyFirmware
+    fi
+    git clone https://github.com/Samuel-0-0/LazyFirmware.git
+}
+
 
 echo '
 █████████████████████████████████████████████████████████
@@ -407,33 +433,33 @@ c) KlipperScreen是用来控制Klipper的触摸屏界面
     使用文档：https://klipperscreen.readthedocs.io/en/latest
 d) Gcode Shell Command是Klipper用来执行shell脚本的插件
     使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md
-e) 自适应网床插件会根据切片动态生成床面网格参数，从而减少床网探测时间
-    使用文档：https://github.com/eamars/klipper_adaptive_bed_mesh/blob/main/readme_zh_cn.md
-f) 无限位归零插件在复刻了现有无限位归零宏的所有功能基础上增加了额外的功能
+e) 无限位归零插件在复刻了现有无限位归零宏的所有功能基础上增加了额外的功能
     使用文档：https://github.com/eamars/sensorless_homing_helper/blob/main/readme_zh_cn.md
-g) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖
+f) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖
     使用文档：https://www.klipper3d.org/Measuring_Resonances.html
-h) Crowsnest是用来管理和使用摄像头的服务
+g) Crowsnest是用来管理和使用摄像头的服务
     使用文档：https://github.com/mainsail-crew/crowsnest
-i) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
+h) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
     使用文档：https://github.com/mainsail-crew/moonraker-timelapse
-j) TMC驱动自动调谐插件可以动态调整TMC驱动的相应参数，减轻运行噪音
+i) TMC驱动自动调谐插件可以动态调整TMC驱动的相应参数，减轻运行噪音
     使用文档：https://github.com/andrewmcgr/klipper_tmc_autotune
+j) LazyFirmware懒人一键升级3D打印机控制板MCU的Klipper固件
+    使用文档：https://github.com/Samuel-0-0/LazyFirmware
 
 注意：部分插件需要自行修改配置文件，请查看使用文档。
 
 请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：\
             " 42 108 10 \
             "a" "Klipper及Moonraker - 必须的组件" ON \
-            "b" "Mainsail - WEBUI控制界面" OFF \
+            "b" "Mainsail - WEBUI控制界面" ON \
             "c" "KlipperScreen - 触摸屏控制界面" OFF \
             "d" "Gcode Shell Command - 执行Shell插件" ON \
-            "e" "Adaptive Bed Mesh - 自适应网床插件" ON \
-            "f" "Sensorless Homing Helper - 无限位归零插件" OFF \
-            "g" "Input Shaper - 加速度测试依赖" ON \
-            "h" "Crowsnest - 摄像头服务" ON \
-            "i" "Timelapse - 延时摄影插件" ON \
-            "j" "Klipper TMC Autotune - TMC驱动自动调谐插件" ON \
+            "e" "Sensorless Homing Helper - 无限位归零插件" OFF \
+            "f" "Input Shaper - 加速度测试依赖" ON \
+            "g" "Crowsnest - 摄像头服务" ON \
+            "h" "Timelapse - 延时摄影插件" ON \
+            "i" "Klipper TMC Autotune - TMC驱动自动调谐插件" ON \
+            "j" "LazyFirmware - 一键升级klipper固件" OFF \
             3>&1 1>&2 2>&3)
     exitstatus=$?
     if [ $exitstatus = 0 ]; then
@@ -444,12 +470,12 @@ j) TMC驱动自动调谐插件可以动态调整TMC驱动的相应参数，减�
             b) install_mainsail ;;
             c) install_KlipperScreen ;;
             d) install_gcode_shell_command ;;
-            e) install_adaptive_bed_mesh ;;
-            f) install_sensorless_homing ;;
-            g) install_input_shaper ;;
-            h) install_crowsnest ;;
-            i) install_timelapse ;;
-            j) install_klipper_tmc_autotune ;;
+            e) install_sensorless_homing ;;
+            f) install_input_shaper ;;
+            g) install_crowsnest ;;
+            h) install_timelapse ;;
+            i) install_klipper_tmc_autotune ;;
+            j) install_lazyfirmware ;;
             esac
         done
     else

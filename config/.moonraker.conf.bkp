@@ -24,7 +24,6 @@ trusted_clients =
 	::1/128
 cors_domains = 
 	*.local
-	*.529300529.xyz:*
 force_logins = False
 
 [history]

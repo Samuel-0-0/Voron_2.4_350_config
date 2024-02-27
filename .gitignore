@@ -2,6 +2,8 @@ backup/*
 cert/*
 config/timelapse.cfg
 config/print_area_bed_mesh.cfg
+config/.moonraker.conf.bkp
+config/printer-*.cfg
 gcodes/*
 logs/*
 timelapse/*
