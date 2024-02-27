@@ -3,7 +3,8 @@ cert/*
 config/timelapse.cfg
 config/print_area_bed_mesh.cfg
 config/.moonraker.conf.bkp
-config/printer-*.cfg
+config/printer-*
+config/input_shaper/*
 gcodes/*
 logs/*
 timelapse/*
