@@ -78,7 +78,7 @@ function install_klipper {
     if [ -d ${KLIPPY_ENV_DIR} ]; then
         rm -rf ${KLIPPY_ENV_DIR}
     fi
-    git clone https://github.com/KevinOConnor/klipper.git ${KLIPPER_DIR}
+    git clone https://github.com/Klipper3d/klipper.git ${KLIPPER_DIR}
     # Packages for python cffi
     PKGLIST="python3-virtualenv python3-dev libffi-dev build-essential"
     # kconfig requirements
@@ -102,7 +102,10 @@ function install_klipper {
     report_status "创建用于Klipper的Python虚拟空间..."
 
     # Create virtualenv if it doesn't already exist
-    [ ! -d ${KLIPPY_ENV_DIR} ] && virtualenv -p python3 ${KLIPPY_ENV_DIR}
+    if [ -d ${KLIPPY_ENV_DIR} ]; then
+        rm -rf ${KLIPPY_ENV_DIR}
+    fi
+    virtualenv -p python3 ${KLIPPY_ENV_DIR}
 
     # Install/update dependencies
     ${KLIPPY_ENV_DIR}/bin/pip install -r ${KLIPPER_DIR}/scripts/klippy-requirements.txt
@@ -466,7 +469,7 @@ j) LazyFirmware懒人一键升级3D打印机控制板MCU的Klipper固件
         CHOICES=$(sed  's/\"//g' <<<$CHOICES)
         for PACKAGE in $CHOICES; do
             case $PACKAGE in
-            a) pre_setup && install_klipper && install_moonraker && configure_can_interface ;;
+            a) pre_setup && install_moonraker && install_klipper && configure_can_interface ;;
             b) install_mainsail ;;
             c) install_KlipperScreen ;;
             d) install_gcode_shell_command ;;
