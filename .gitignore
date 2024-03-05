@@ -4,6 +4,7 @@ config/timelapse.cfg
 config/print_area_bed_mesh.cfg
 config/.moonraker.conf.bkp
 config/printer-*
+config/crowsnest.conf.*
 config/input_shaper/*
 gcodes/*
 logs/*
