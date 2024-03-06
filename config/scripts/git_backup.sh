@@ -16,30 +16,35 @@ mainsail_folder=~/mainsail
 MAX_RETRIES=10
 
 ### 打印消息颜色
+red=$(echo -en "\e[91m")
 green=$(echo -en "\e[92m")
 yellow=$(echo -en "\e[93m")
-red=$(echo -en "\e[91m")
+blue=$(echo -en "\e[94m")
 default=$(echo -en "\e[39m")
 
 ### 打印消息
 function report_status {
-    case $1 in
-        ok)
-            echo -e "\n${green}$2 ${default}"
-            ;;
-        warning)
-            echo -e "\n${yellow}$2 ${default}"
-            ;;
-        error)
-            echo -e "\n${red}$2 ${default}"
-            ;;
-    esac
+    if [ ! -z "$2" ]; then
+        case $2 in
+            ok)
+                echo -e "\n${green}$1${default}"
+                ;;
+            warning)
+                echo -e "\n${yellow}$1${default}"
+                ;;
+            error)
+                echo -e "\n${red}$1${default}"
+                ;;
+        esac
+    else
+        echo -e "\n${blue}$1${default}"
+    fi
 }
 
 ### 获取版本信息
 function grab_version {
   if [ ! -z "$klipper_folder" ]; then
-    report_status "ok" "当前Klipper版本："
+    report_status "当前Klipper版本："
     cd "$klipper_folder"
     klipper_commit=$(git rev-parse --short=7 HEAD)
     m1="Klipper:$klipper_commit"
@@ -47,7 +52,7 @@ function grab_version {
     cd ..
   fi
   if [ ! -z "$moonraker_folder" ]; then
-    report_status "ok" "当前Moonraker版本："
+    report_status "当前Moonraker版本："
     cd "$moonraker_folder"
     moonraker_commit=$(git rev-parse --short=7 HEAD)
     m2="Moonraker:$moonraker_commit"
@@ -55,7 +60,7 @@ function grab_version {
     cd ..
   fi
   if [ ! -z "$mainsail_folder" ]; then
-    report_status "ok" "当前Mainsail版本："
+    report_status "当前Mainsail版本："
     mainsail_ver=$(head -n 1 $mainsail_folder/.version)
     m3="Mainsail:$mainsail_ver"
     echo $mainsail_ver
@@ -69,14 +74,14 @@ function git_pull {
         git pull -v
         # 检查 git 命令的返回状态码
         if [ $? -eq 0 ]; then
-            report_status "ok" "完成"
+            report_status "完成" "ok"
             break
         else
             ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                report_status "warning" "失败，开始第$RETRY_COUNT次重试..."
+                report_status "失败，开始第$RETRY_COUNT次重试..." "warning"
             else
-                report_status "error" "失败，已达到最大尝试次数，请稍后再试..."
+                report_status "失败，已达到最大尝试次数，请稍后再试..." "error"
                 exit 1
             fi
         fi
@@ -90,14 +95,14 @@ function git_push {
         git push
         # 检查 git 命令的返回状态码
         if [ $? -eq 0 ]; then
-            report_status "ok" "完成"
+            report_status "完成" "ok"
             break
         else
             ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                report_status "warning" "失败，开始第$RETRY_COUNT次重试..."
+                report_status "失败，开始第$RETRY_COUNT次重试..." "warning"
             else
-                report_status "error" "失败，已达到最大尝试次数，请稍后再试..."
+                report_status "失败，已达到最大尝试次数，请稍后再试..." "error"
                 exit 1
             fi
         fi
@@ -108,11 +113,11 @@ function git_push {
 ### 配置备份操作
 function push_config {
   cd $config_folder
-  report_status "ok" "拉取远程更新 ..."
+  report_status "拉取远程更新 ..."
   #从远程仓库拉取更新
   RETRY_COUNT=0
   git_pull
-  report_status "ok" "与本地更新合并 ..."
+  report_status "与本地更新合并 ..."
   #合并
   git add . -v
   current_date=$(date +"%Y-%m-%d %T")
