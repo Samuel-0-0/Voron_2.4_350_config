@@ -75,7 +75,6 @@ function git_pull {
             ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 report_status "warning" "失败，开始第$RETRY_COUNT次重试..."
-                git_pull
             else
                 report_status "error" "失败，已达到最大尝试次数，请稍后再试..."
                 exit 1
@@ -88,7 +87,7 @@ function git_pull {
 function git_push {
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         # 执行 git 命令
-        git pull -v
+        git push
         # 检查 git 命令的返回状态码
         if [ $? -eq 0 ]; then
             report_status "ok" "完成"
@@ -97,7 +96,6 @@ function git_push {
             ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 report_status "warning" "失败，开始第$RETRY_COUNT次重试..."
-                git_push
             else
                 report_status "error" "失败，已达到最大尝试次数，请稍后再试..."
                 exit 1

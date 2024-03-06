@@ -107,11 +107,6 @@ function git_clone {
             ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 report_status "warning" "克隆失败，开始第$RETRY_COUNT次重试..."
-                if [ ! -z "$3" ]; then
-                    git_clone $1 $2 $3
-                else
-                    git_clone $1 $2
-                fi
             else
                 report_status "error" "克隆失败，已达到最大尝试次数，请稍后再试..."
                 exit 1
