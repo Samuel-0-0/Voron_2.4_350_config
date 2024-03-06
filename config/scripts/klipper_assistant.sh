@@ -6,7 +6,7 @@
 
 ################################################################
 # 快速使用：
-# cd ~ && wget -q -O  ~/klipper_assistant.sh https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/klipper_assistant.sh && chmod +x klipper_assistant.sh && ./klipper_assistant.sh
+# curl -sSL https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/klipper_assistant.sh | bash
 ################################################################
 
 ### 遇到错误强制退出
@@ -17,20 +17,30 @@ set -e
   在需要的时候，脚本会请求相应的权限。" 8 48  && exit 1
 
 ### 环境变量
-KLIPPY_ENV_DIR="${HOME}/klippy-env"
-MOONRAKER_ENV_DIR="${HOME}/moonraker-env"
 SYSTEMD_DIR="/etc/systemd/system"
-KLIPPER_DIR="${HOME}/klipper"
 KLIPPER_USER=${USER}
 KLIPPER_GROUP=${KLIPPER_USER}
+KLIPPER_DIR="${HOME}/klipper"
 MOONRAKER_DIR="${HOME}/moonraker"
 MAINSAIL_DIR="${HOME}/mainsail"
 KLIPPERSCREEN_DIR="${HOME}/KlipperScreen"
+KLIPPY_ENV_DIR="${HOME}/klippy-env"
+MOONRAKER_ENV_DIR="${HOME}/moonraker-env"
+KLIPPERSCREEN_ENV_DIR="${HOME}/.KlipperScreen-env"
 PRINTER_DATA="${HOME}/printer_data"
 KLIPPER_ENV_FILE="${PRINTER_DATA}/systemd/klipper.env"
 KLIPPER_CONFIG="${PRINTER_DATA}/config/printer.cfg"
 KLIPPER_LOG="${PRINTER_DATA}/logs/klippy.log"
 KLIPPER_SOCKET="/tmp/klippy_uds"
+MAX_RETRIES=10
+KLIPPER_GITREPO="https://github.com/Klipper3d/klipper.git"
+MOONRAKER_GITREPO="https://github.com/Arksine/moonraker.git"
+KLIPPERSCREEN_GITREPO="https://github.com/jordanruthe/KlipperScreen.git"
+SENSORLESS_GITREPO="https://github.com/eamars/sensorless_homing_helper.git"
+CROWSNEST_GITREPO="https://github.com/mainsail-crew/crowsnest.git"
+TIMELAPES_GITREPO="https://github.com/mainsail-crew/moonraker-timelapse.git"
+TMC_AUTOTUNE_GITREPO="https://github.com/andrewmcgr/klipper_tmc_autotune.git"
+LAZYFIRMWARE_GITREPO="https://github.com/Samuel-0-0/LazyFirmware.git"
 
 ### 打印消息颜色
 green=$(echo -en "\e[92m")
@@ -69,48 +79,72 @@ EOF
     fi
 }
 
+### 克隆项目
+function git_clone {
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        report_status "克隆$1..."
+        # 执行 git clone 命令
+        if [ ! -z "$3" ]; then
+            git clone $3 $2
+        else
+            git clone $2
+        fi        
+        # 检查 git clone 命令的返回状态码
+        if [ $? -eq 0 ]; then
+            report_status "克隆完成"
+            break
+        else
+            ((retry_count++))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                report_status "克隆失败，开始第$RETRY_COUNT次重试..."
+                if [ ! -z "$3" ]; then
+                    git_clone $1 $2 $3
+                else
+                    git_clone $1 $2
+                fi
+            else
+                report_status "克隆失败，已达到最大尝试次数，请稍后再试..."
+                exit 1
+            fi
+        fi
+    done
+}
+
 ### 安装Klipper
 function install_klipper {
-    report_status "获取Klipper文件..."
     if [ -d ${KLIPPER_DIR} ]; then
         rm -rf ${KLIPPER_DIR}
     fi
     if [ -d ${KLIPPY_ENV_DIR} ]; then
         rm -rf ${KLIPPY_ENV_DIR}
     fi
-    git clone https://github.com/Klipper3d/klipper.git ${KLIPPER_DIR}
-    # Packages for python cffi
+
+    RETRY_COUNT=0
+    git_clone "KLIPPER" ${KLIPPER_GITREPO}
+    # python cffi依赖
     PKGLIST="python3-virtualenv python3-dev libffi-dev build-essential"
-    # kconfig requirements
+    # kconfig依赖
     PKGLIST="${PKGLIST} libncurses-dev"
     # hub-ctrl
     PKGLIST="${PKGLIST} libusb-dev"
-    # AVR chip installation and building
+    # AVR芯片编译依赖
     PKGLIST="${PKGLIST} avrdude gcc-avr binutils-avr avr-libc"
-    # ARM chip installation and building
+    # ARM芯片编译依赖
     PKGLIST="${PKGLIST} stm32flash dfu-util libnewlib-arm-none-eabi"
     PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0 pkg-config"
 
-    # Update system package info
     report_status "更新软件源列表..."
     sudo apt-get update
 
-    # Install desired packages
     report_status "安装所需软件..."
     sudo apt-get install --yes ${PKGLIST}
 
     report_status "创建用于Klipper的Python虚拟空间..."
-
-    # Create virtualenv if it doesn't already exist
-    if [ -d ${KLIPPY_ENV_DIR} ]; then
-        rm -rf ${KLIPPY_ENV_DIR}
-    fi
     virtualenv -p python3 ${KLIPPY_ENV_DIR}
 
-    # Install/update dependencies
+    report_status "安装Python依赖..."
     ${KLIPPY_ENV_DIR}/bin/pip install -r ${KLIPPER_DIR}/scripts/klippy-requirements.txt
 
-    # Create systemd service file
     report_status "配置Klipper系统服务..."
     # KLIPPER_ARGS="/home/samuel/klipper/klippy/klippy.py /home/samuel/printer_data/config/printer.cfg -l /home/samuel/printer_data/logs/klippy.log -a /tmp/klippy_uds"
     sudo /bin/sh -c "cat > ${KLIPPER_ENV_FILE}" << EOF
@@ -139,22 +173,21 @@ Restart=always
 RestartSec=10
 Nice=-20
 EOF
-    # Use systemctl to enable the klipper systemd service script
+
     sudo systemctl enable klipper.service
     sudo systemctl start klipper
 }
 
 ### 安装Moonraker
 function install_moonraker {
-    report_status "获取Moonraker文件..."
     if [ -d ${MOONRAKER_DIR} ]; then
         rm -rf ${MOONRAKER_DIR}
     fi
     if [ -d ${MOONRAKER_ENV_DIR} ]; then
         rm -rf ${MOONRAKER_ENV_DIR}
     fi
-    git clone https://github.com/Arksine/moonraker.git ${MOONRAKER_DIR}
-    report_status "安装Moonraker..."
+    RETRY_COUNT=0
+    git_clone "MOONRAKER" ${MOONRAKER_GITREPO}
     source ${MOONRAKER_DIR}/scripts/install-moonraker.sh
     #source ${MOONRAKER_DIR}/scripts/set-policykit-rules.sh
 }
@@ -267,9 +300,9 @@ server {
 EOF
 
     sudo ln -s /etc/nginx/sites-available/mainsail /etc/nginx/sites-enabled/mainsail
-    unzip -o ${MAINSAIL_DIR}/mainsail.zip -d ${MAINSAIL_DIR} && rm ${MAINSAIL_DIR}/mainsail.zip
-#    [ -f ${MAINSAIL_DIR}/config.json ] && rm ${MAINSAIL_DIR}/config.json && \
-#    ln -sf ~/printer_data/config/mainsail_config.json ${MAINSAIL_DIR}/config.json
+    unzip -o ${MAINSAIL_DIR}/mainsail.zip -d ${MAINSAIL_DIR}
+    rm ${MAINSAIL_DIR}/mainsail.zip
+
     sudo systemctl restart nginx
 }
 
@@ -293,37 +326,38 @@ EOF
 
 ### 安装KlipperScreen
 function install_KlipperScreen {
-    report_status "获取KlipperScreen文件..."
     if [ -d "${KLIPPERSCREEN_DIR}" ]; then
         rm -rf ${KLIPPERSCREEN_DIR}
     fi
-    git clone https://github.com/jordanruthe/KlipperScreen.git ${KLIPPERSCREEN_DIR}
-    report_status "安装KlipperScreen..."
+    if [ -d ${KLIPPERSCREEN_ENV_DIR} ]; then
+        rm -rf ${KLIPPERSCREEN_ENV_DIR}
+    fi
+    RETRY_COUNT=0
+    git_clone "KLIPPERSCREEN" ${KLIPPERSCREEN_GITREPO}
     source ${KLIPPERSCREEN_DIR}/scripts/KlipperScreen-install.sh
 }
 
 ### crowsnest，替代MJPG-Streamer
 function install_crowsnest {
-    report_status  "安装crowsnest..."
     if [ -d "crowsnest" ]; then
         rm -rf crowsnest
     fi
-    git clone --recurse-submodules https://github.com/mainsail-crew/crowsnest.git
-    #sed -i 's/61ab2a8/dde2190/g' ~/crowsnest/bin/Makefile
-    #sed -i 's|https://github.com|https://ghproxy.com/https://github.com|g' ~/crowsnest/bin/Makefile
-    #sed -i 's/v0.20.2/v0.21.2/g' ~/crowsnest/bin/rtsp-simple-server/version
-    pushd ~/crowsnest && sudo make install
+    RETRY_COUNT=0
+    git_clone "CROWSNEST" ${CROWSNEST_GITREPO} --recurse-submodules
+    pushd ~/crowsnest
+    sudo make install
     popd
 }
 
 ### timelapse，用于延时摄影
 function install_timelapse {
-    report_status "安装timelapse..."
     if [ -d "moonraker-timelapse" ]; then
         rm -rf moonraker-timelapse
     fi
-    git clone https://github.com/mainsail-crew/moonraker-timelapse.git
-    pushd ~/moonraker-timelapse && make install
+    RETRY_COUNT=0
+    git_clone "TIMELAPSE" ${TIMELAPSE_GITREPO}
+    pushd ~/moonraker-timelapse
+    make install
     popd
 }
 
@@ -340,43 +374,33 @@ function install_input_shaper {
     ~/klippy-env/bin/pip install -v numpy
 }
 
-### 自适应网床插件
-function install_adaptive_bed_mesh {
-    report_status "$安装自适应网床插件..."
-    if [ -d "klipper_adaptive_bed_mesh" ]; then
-        rm -rf klipper_adaptive_bed_mesh
-    fi
-    git clone https://github.com/eamars/klipper_adaptive_bed_mesh.git
-    source klipper_adaptive_bed_mesh/install.sh
-}
-
 ### 无限位归零插件
 function install_sensorless_homing {
-    report_status "安装无限位归零插件..."
     if [ -d "sensorless_homing_helper" ]; then
         rm -rf sensorless_homing_helper
     fi
-    git clone https://github.com/eamars/sensorless_homing_helper.git
+    RETRY_COUNT=0
+    git_clone "SENSORLESS" ${SENSORLESS_GITREPO}
     source sensorless_homing_helper/install.sh
 }
 
 ### TMC驱动自动调谐插件
 function install_klipper_tmc_autotune {
-    report_status "安装TMC驱动自动调谐插件..."
     if [ -d "klipper_tmc_autotune" ]; then
         rm -rf klipper_tmc_autotune
     fi
-    git clone https://github.com/andrewmcgr/klipper_tmc_autotune.git
+    RETRY_COUNT=0
+    git_clone "TMC_AUTOTUNE" ${TMC_AUTOTUNE_GITREPO}
     source klipper_tmc_autotune/install.sh
 }
 
 ### 一键升级klipper固件
 function install_lazyfirmware {
-    report_status "安装一键升级klipper固件脚本..."
     if [ -d "LazyFirmware" ]; then
         rm -rf LazyFirmware
     fi
-    git clone https://github.com/Samuel-0-0/LazyFirmware.git
+    RETRY_COUNT=0
+    git_clone "LAZYFIRMWARE" ${LAZYFIRMWARE_GITREPO}
 }
 
 
