@@ -25,13 +25,13 @@ default=$(echo -en "\e[39m")
 function report_status {
     case $1 in
         ok)
-            echo -e "\n\n${green}###### $2 ${default}"
+            echo -e "\n${green}$2 ${default}"
             ;;
         warning)
-            echo -e "\n\n${yellow}###### $2 ${default}"
+            echo -e "\n${yellow}$2 ${default}"
             ;;
         error)
-            echo -e "\n\n${red}###### $2 ${default}"
+            echo -e "\n${red}$2 ${default}"
             ;;
     esac
 }
@@ -72,7 +72,7 @@ function git_pull {
             report_status "ok" "完成"
             break
         else
-            ((retry_count++))
+            ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 report_status "warning" "失败，开始第$RETRY_COUNT次重试..."
                 git_pull
@@ -94,7 +94,7 @@ function git_push {
             report_status "ok" "完成"
             break
         else
-            ((retry_count++))
+            ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 report_status "warning" "失败，开始第$RETRY_COUNT次重试..."
                 git_push

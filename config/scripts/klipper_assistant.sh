@@ -50,12 +50,22 @@ default=$(echo -en "\e[39m")
 
 ### 打印消息
 function report_status {
-    echo -e "\n\n${yellow}###### $1 ${default}"
+    case $1 in
+        ok)
+            echo -e "\n${green} $2 ${default}"
+            ;;
+        warning)
+            echo -e "\n${yellow} $2 ${default}"
+            ;;
+        error)
+            echo -e "\n${red} $2 ${default}"
+            ;;
+    esac
 }
 
 ### 预处理
 function pre_setup {
-    report_status "设置国内PYPI清华镜像源..."
+    report_status "ok" "设置国内PYPI清华镜像源..."
     [ ! -d ${HOME}/.pip ] && mkdir ${HOME}/.pip
     sudo /bin/sh -c "cat > ${HOME}/.pip/pip.conf" << EOF
 [global]
@@ -67,22 +77,22 @@ trusted-host=pypi.tuna.tsinghua.edu.cn
 EOF
     report_status "配置用户组..."
     if grep -q "dialout" </etc/group && ! grep -q "dialout" <(groups "${USER}"); then
-        sudo usermod -a -G dialout "${USER}" && report_status "已将用户${USER}添加到dialout用户组!"
+        sudo usermod -a -G dialout "${USER}" && report_status "ok" "已将用户${USER}添加到dialout用户组!"
     fi
 
     if grep -q "tty" </etc/group && ! grep -q "tty" <(groups "${USER}"); then
-        sudo usermod -a -G tty "${USER}" && report_status "已将用户${USER}添加到tty用户组!"
+        sudo usermod -a -G tty "${USER}" && report_status "ok" "已将用户${USER}添加到tty用户组!"
     fi
 
     if grep -q "input" </etc/group && ! grep -q "input" <(groups "${USER}"); then
-        sudo usermod -a -G input "${USER}" && report_status "已将用户${USER}添加到input用户组!"
+        sudo usermod -a -G input "${USER}" && report_status "ok" "已将用户${USER}添加到input用户组!"
     fi
 }
 
 ### 克隆项目
 function git_clone {
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        report_status "克隆$1..."
+        report_status "ok" "克隆$1..."
         # 执行 git clone 命令
         if [ ! -z "$3" ]; then
             git clone $3 $2
@@ -91,19 +101,19 @@ function git_clone {
         fi        
         # 检查 git clone 命令的返回状态码
         if [ $? -eq 0 ]; then
-            report_status "克隆完成"
+            report_status "ok" "克隆完成"
             break
         else
-            ((retry_count++))
+            ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                report_status "克隆失败，开始第$RETRY_COUNT次重试..."
+                report_status "warning" "克隆失败，开始第$RETRY_COUNT次重试..."
                 if [ ! -z "$3" ]; then
                     git_clone $1 $2 $3
                 else
                     git_clone $1 $2
                 fi
             else
-                report_status "克隆失败，已达到最大尝试次数，请稍后再试..."
+                report_status "error" "克隆失败，已达到最大尝试次数，请稍后再试..."
                 exit 1
             fi
         fi
@@ -133,19 +143,19 @@ function install_klipper {
     PKGLIST="${PKGLIST} stm32flash dfu-util libnewlib-arm-none-eabi"
     PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0 pkg-config"
 
-    report_status "更新软件源列表..."
+    report_status "ok" "更新软件源列表..."
     sudo apt-get update
 
-    report_status "安装所需软件..."
+    report_status "ok" "安装所需软件..."
     sudo apt-get install --yes ${PKGLIST}
 
-    report_status "创建用于Klipper的Python虚拟空间..."
+    report_status "ok" "创建用于Klipper的Python虚拟空间..."
     virtualenv -p python3 ${KLIPPY_ENV_DIR}
 
-    report_status "安装Python依赖..."
+    report_status "ok" "安装Python依赖..."
     ${KLIPPY_ENV_DIR}/bin/pip install -r ${KLIPPER_DIR}/scripts/klippy-requirements.txt
 
-    report_status "配置Klipper系统服务..."
+    report_status "ok" "配置Klipper系统服务..."
     # KLIPPER_ARGS="/home/samuel/klipper/klippy/klippy.py /home/samuel/printer_data/config/printer.cfg -l /home/samuel/printer_data/logs/klippy.log -a /tmp/klippy_uds"
     sudo /bin/sh -c "cat > ${KLIPPER_ENV_FILE}" << EOF
 KLIPPER_ARGS="${KLIPPER_DIR}/klippy/klippy.py ${KLIPPER_CONFIG} -l ${KLIPPER_LOG} -a ${KLIPPER_SOCKET}"
@@ -194,10 +204,10 @@ function install_moonraker {
 
 ### 安装Mainsail
 function install_mainsail {
-    report_status "获取Mainsail文件..."
+    report_status "ok" "获取Mainsail文件..."
     [ ! -d ${MAINSAIL_DIR} ] && mkdir ${MAINSAIL_DIR}
     wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://mirror.ghproxy.com/https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
-    report_status "安装Mainsail..."
+    report_status "ok" "安装Mainsail..."
     sudo apt-get install --yes nginx
 
     sudo /bin/sh -c  "cat > /etc/nginx/conf.d/upstreams.conf" << EOF
@@ -311,7 +321,7 @@ function configure_can_interface {
     sudo modprobe can
     if [ $? -eq 0 ]
     then
-        report_status "添加CAN网络配置..."
+        report_status "ok" "添加CAN网络配置..."
         sudo /bin/sh -c  "cat > /etc/network/interfaces.d/can0" << EOF
 allow-hotplug can0
 iface can0 can static
@@ -320,7 +330,7 @@ iface can0 can static
 
 EOF
     else
-        report_status "因内核不支持CAN，故取消CAN网络配置..."
+        report_status "warning" "因内核不支持CAN，故取消CAN网络配置..."
     fi
 }
 
@@ -363,13 +373,13 @@ function install_timelapse {
 
 ### gcode_shell_command，用于在gcode中执行shell脚本
 function install_gcode_shell_command {
-    report_status "安装gcode_shell_command..."
+    report_status "ok" "安装gcode_shell_command..."
     wget -q -O ~/klipper/klippy/extras/gcode_shell_command.py https://mirror.ghproxy.com/https://raw.githubusercontent.com/th33xitus/kiauh/master/resources/gcode_shell_command.py
 }
 
 ### 加速度测试所需依赖
 function install_input_shaper {
-    report_status "安装加速度测试依赖包..."
+    report_status "ok" "安装加速度测试依赖包..."
     sudo apt install --yes python3-numpy python3-matplotlib
     ~/klippy-env/bin/pip install -v numpy
 }
