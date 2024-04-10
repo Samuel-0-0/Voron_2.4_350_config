@@ -1,9 +1,9 @@
 klipper_mcu
-#webcamd
-#MoonCord
+webcamd
+MoonCord
 KlipperScreen
-#moonraker-telegram-bot
-#moonraker-obico
-#sonar
+moonraker-telegram-bot
+moonraker-obico
+sonar
 crowsnest
-#octoeverywhere
+octoeverywhere

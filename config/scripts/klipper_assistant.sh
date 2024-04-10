@@ -380,7 +380,7 @@ function install_gcode_shell_command {
 ### 加速度测试所需依赖
 function install_input_shaper {
     report_status "安装加速度测试依赖包..."
-    sudo apt install --yes python3-numpy python3-matplotlib
+    sudo apt-get install --yes python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
     ~/klippy-env/bin/pip install -v numpy
 }
 
