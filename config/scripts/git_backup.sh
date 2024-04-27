@@ -11,7 +11,7 @@ klipper_folder=~/klipper
 ### Moonraker文件夹位置，默认'~/moonraker'
 moonraker_folder=~/moonraker
 ### Mainsail文件夹位置，默认'~/mainsail'
-mainsail_folder=~/mainsail
+#mainsail_folder=~/mainsail
 
 MAX_RETRIES=10
 

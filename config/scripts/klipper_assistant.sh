@@ -41,6 +41,8 @@ CROWSNEST_GITREPO="https://github.com/mainsail-crew/crowsnest.git"
 TIMELAPES_GITREPO="https://github.com/mainsail-crew/moonraker-timelapse.git"
 TMC_AUTOTUNE_GITREPO="https://github.com/andrewmcgr/klipper_tmc_autotune.git"
 LAZYFIRMWARE_GITREPO="https://github.com/Samuel-0-0/LazyFirmware.git"
+LED_EFFECTS_GITREPO="https://github.com/julianschill/klipper-led_effect.git"
+KATAPULT_GITREPO="https://github.com/Arksine/katapult.git"
 
 ### 打印消息颜色
 red=$(echo -en "\e[91m")
@@ -206,7 +208,7 @@ function install_moonraker {
 function install_mainsail {
     report_status "获取Mainsail文件..."
     [ ! -d ${MAINSAIL_DIR} ] && mkdir ${MAINSAIL_DIR}
-    wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://mirror.ghproxy.com/https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
+    wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
     report_status "安装Mainsail..."
     sudo apt-get install --yes nginx
 
@@ -263,7 +265,7 @@ server {
     gzip_http_version 1.1;
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/x-javascript application/json application/xml;
     # web_path from mainsail static files
-    root /home/samuel/mainsail;
+    root ${MAINSAIL_DIR};
     index index.html;
     server_name _;
     # disable max upload size checks
@@ -336,7 +338,7 @@ EOF
 
 ### 安装KlipperScreen
 function install_KlipperScreen {
-    if [ -d "${KLIPPERSCREEN_DIR}" ]; then
+    if [ -d ${KLIPPERSCREEN_DIR} ]; then
         rm -rf ${KLIPPERSCREEN_DIR}
     fi
     if [ -d ${KLIPPERSCREEN_ENV_DIR} ]; then
@@ -404,13 +406,28 @@ function install_klipper_tmc_autotune {
     source klipper_tmc_autotune/install.sh
 }
 
+### LED EFFECTS插件
+function install_klipper_led_effect {
+    if [ -d "klipper-led_effect" ]; then
+        rm -rf klipper-led_effect
+    fi
+    RETRY_COUNT=0
+    git_clone "LED_EFFECTS" ${LED_EFFECTS_GITREPO}
+    source klipper-led_effect/install-led_effect.sh
+}
+
 ### 一键升级klipper固件
 function install_lazyfirmware {
     if [ -d "LazyFirmware" ]; then
         rm -rf LazyFirmware
     fi
     RETRY_COUNT=0
+    git_clone "KATAPULT" ${KATAPULT_GITREPO}
+    RETRY_COUNT=0
     git_clone "LAZYFIRMWARE" ${LAZYFIRMWARE_GITREPO}
+    pip3 install pyserial
+    mkdir ${PRINTER_DATA}/config/lazyfirmware
+    cp ${HOME}/LazyFirmware/config/config.cfg ${PRINTER_DATA}/config/lazyfirmware/config.cfg
 }
 
 
@@ -470,33 +487,36 @@ c) KlipperScreen是用来控制Klipper的触摸屏界面
     使用文档：https://klipperscreen.readthedocs.io/en/latest
 d) Gcode Shell Command是Klipper用来执行shell脚本的插件
     使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md
-e) 无限位归零插件在复刻了现有无限位归零宏的所有功能基础上增加了额外的功能
+e) 无限位归零插件是用于Klipper的增强插件
     使用文档：https://github.com/eamars/sensorless_homing_helper/blob/main/readme_zh_cn.md
 f) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖
     使用文档：https://www.klipper3d.org/Measuring_Resonances.html
-g) Crowsnest是用来管理和使用摄像头的服务
+g) Crowsnest是用来管理和使用摄像头的独立服务组件
     使用文档：https://github.com/mainsail-crew/crowsnest
 h) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
     使用文档：https://github.com/mainsail-crew/moonraker-timelapse
-i) TMC驱动自动调谐插件可以动态调整TMC驱动的相应参数，减轻运行噪音
+i) TMC驱动自动调谐插件可以帮助Klipper动态调整TMC驱动的相应参数，减轻运行噪音
     使用文档：https://github.com/andrewmcgr/klipper_tmc_autotune
-j) LazyFirmware懒人一键升级3D打印机控制板MCU的Klipper固件
+j) LED Effects是用于实现RGB灯效的Klipper插件
+    使用文档：https://github.com/julianschill/klipper-led_effect/blob/master/docs/LED_Effect.md
+k) LazyFirmware帮助懒人一键升级3D打印机控制板的Klipper固件
     使用文档：https://github.com/Samuel-0-0/LazyFirmware
 
 注意：部分插件需要自行修改配置文件，请查看使用文档。
 
 请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：\
-            " 42 108 10 \
+            " 42 108 11 \
             "a" "Klipper及Moonraker - 必须的组件" ON \
-            "b" "Mainsail - WEBUI控制界面" ON \
+            "b" "Mainsail - WEBUI控制界面" OFF \
             "c" "KlipperScreen - 触摸屏控制界面" OFF \
             "d" "Gcode Shell Command - 执行Shell插件" ON \
             "e" "Sensorless Homing Helper - 无限位归零插件" OFF \
             "f" "Input Shaper - 加速度测试依赖" ON \
-            "g" "Crowsnest - 摄像头服务" ON \
-            "h" "Timelapse - 延时摄影插件" ON \
+            "g" "Crowsnest - 摄像头服务" OFF \
+            "h" "Timelapse - 延时摄影插件" OFF \
             "i" "Klipper TMC Autotune - TMC驱动自动调谐插件" ON \
-            "j" "LazyFirmware - 一键升级klipper固件" OFF \
+            "j" "LED Effects - RGB灯效插件" OFF \
+            "k" "LazyFirmware - 一键升级klipper固件" ON \
             3>&1 1>&2 2>&3)
     exitstatus=$?
     if [ $exitstatus = 0 ]; then
@@ -512,7 +532,8 @@ j) LazyFirmware懒人一键升级3D打印机控制板MCU的Klipper固件
             g) install_crowsnest ;;
             h) install_timelapse ;;
             i) install_klipper_tmc_autotune ;;
-            j) install_lazyfirmware ;;
+            j) install_klipper_led_effect ;;
+            k) install_lazyfirmware ;;
             esac
         done
     else
