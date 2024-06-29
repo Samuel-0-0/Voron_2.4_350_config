@@ -24,10 +24,10 @@ function arg_parse {
       plot_belt_graph
     ;;
     *)
-      echo -e "\nUsage:"
+      echo -e "\n使用方法："
       echo -e "\t${0} SHAPER|BELT"
-      echo -e "\t\tSHAPER\tGenerate Input Shaper Diagram"
-      echo -e "\t\tBELT\tGenerate Belt Tension Diagram\n"
+      echo -e "\t\tSHAPER\t生成输入整形器（Input Shaper）的图表"
+      echo -e "\t\tBELT\t生成皮带张力图表\n"
       exit 1
   esac
 }
@@ -47,7 +47,7 @@ function plot_shaper_graph {
   #shellcheck disable=SC2012
     file="$(ls -tr /tmp/resonances_"${s}"_* | sort -nr | head -1)"
     date="$(basename "${file}" | cut -d '.' -f1 | awk -F'_' '{print $3"_"$4}')"
-  echo "Generate Graph for ${s} axis ..."
+  echo "正在为 ${s} 轴生成图表 ..."
   "${generator}" "${file}" -o "${isf}"/resonances_"${s}"_"${date}".png
   mv "${file}" "${isf}"/
   done
@@ -65,7 +65,7 @@ function plot_belt_graph {
     mv "${csv}" /tmp/raw_data_belt_"$i"_"${date_ext}".csv
     src+=("/tmp/raw_data_belt_${i}_${date_ext}.csv")
   done
-    echo "Generate Graph for belts ..."
+    echo "正在生成皮带张力图表 ..."
     "${generator}" -c "${src[@]}" -o "${isf}"/resonances_belts_"${date_ext}".png
   for f in "${src[@]}"; do
     mv "${f}" "${isf}"/

@@ -1,6 +1,5 @@
 import math
 
-
 def main():
     lane_spacing = 17.
     c_cart_width = 28.9
@@ -8,15 +7,17 @@ def main():
     extrusion_extra_len = 30.
     belt_base_len = 199.1
     belt_safety = 30.
-    chain_pitch = 15
-    chain_base_len = 120
-    m3x8_base_count = 13
+    chain_base_lens = {
+        15.:    120,
+        16.7:   124,
+        20.:    130
+    }
+    m3x8_base_count = 25
     m3x8_safety = 10
     m3x8_rail_pitch = 40.
     m3x8_rail_end = 4.5
-    
-    print("\nTradRack材料需求计算器\n@Samuel Wang翻译\n")
-    
+    m3_t_nut_base_count = 3
+
     # get lane count
     lane_count = int(input("需要接入的耗材数量："))
 
@@ -34,8 +35,8 @@ def main():
     min_rail_len = c_rail_len if cart_type == "c" else h_rail_len
 
     # get rail length
-    rail_len_str = input("准备使用的线轨长度"
-                         "(默认使用最小值)：")
+    rail_len_str = input("准备使用的线轨长度 "
+                        "(默认使用最小值)：")
     rail_len = max(float(rail_len_str), min_rail_len) if rail_len_str \
         else min_rail_len
 
@@ -45,11 +46,20 @@ def main():
     if max_lane_count > lane_count:
         change_lane_count = input("此线轨长度允许最多{}"
                                   "路耗材。需要将耗材接入数量从{}增加到{}吗？"
-                                  "(请输入y/n): ".format(max_lane_count, lane_count,
+                                  "(请输入y/n): ".format(max_lane_count, lane_count, 
                                                    max_lane_count)).lower()
         if change_lane_count == "y":
             lane_count = max_lane_count
             lane_span = get_lane_span(lane_count, lane_spacing)
+
+    # get cable chain pitch
+    print("\n拖链节距选项："
+          "\n\t15\t(e.g. JFLO J10Q.1.10B)"
+          "\n\t16.7\t(e.g. JFLO J10Q.1.10W)"
+          "\n\t20\t(e.g. IGUS E2-10-10-028-0)\n")
+    chain_pitch = 0.
+    while(not chain_pitch in chain_base_lens):
+        chain_pitch = float(input("输入所选拖链的节距："))
 
     print()
 
@@ -68,11 +78,11 @@ def main():
     # belt
     belt_len = belt_base_len + lane_span * 2
     belt_len_rec = math.ceil(belt_len + belt_safety)
-    print("皮带长度：建议{}mm(预估需要{}mm)".format(
-        belt_len_rec, belt_len))
+    print("皮带长度：建议{}mm(预估需要{}mm))".format(belt_len_rec, 
+                                                                belt_len))
 
     # cable chain
-    chain_length = lane_span / 2 + chain_base_len
+    chain_length = lane_span / 2 + chain_base_lens[chain_pitch]
     chain_link_count = math.ceil(chain_length / chain_pitch)
     print("预估拖链长度：{}mm".format(chain_length))
     print("需要使用拖链节数(不包括两侧固定节点)：{}" \
@@ -83,15 +93,13 @@ def main():
         / m3x8_rail_pitch) + 1
     m3x8_count = m3x8_base_count + lane_count + rail_screw_count
     m3x8_count_rec = m3x8_count + m3x8_safety
-    t_nut_count = rail_screw_count + 1
-    print("M3x8mm内六角螺丝数量：建议{}"
-          "(预估需要{})".format(m3x8_count_rec, m3x8_count))
+    t_nut_count = rail_screw_count + m3_t_nut_base_count
+    print("M3x8mm内六角螺丝数量：建议{} "
+        "(预估需要{})".format(m3x8_count_rec, m3x8_count))
     print("M3弹珠螺母数量：{}".format(t_nut_count))
-
 
 def get_lane_span(lane_count, lane_spacing):
     return (lane_count - 1) * lane_spacing
-
 
 if __name__ == "__main__":
     main()
