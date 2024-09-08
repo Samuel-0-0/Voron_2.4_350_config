@@ -54,15 +54,15 @@ default=$(echo -en "\e[39m")
 ### 打印消息
 function report_status {
     if [ ! -z "$2" ]; then
-        case $2 in
-            ok)
-                echo -e "\n${green}$1${default}"
+        case $1 in
+            info)
+                echo -e "\n${green}$2${default}"
                 ;;
             warning)
-                echo -e "\n${yellow}$1${default}"
+                echo -e "\n${yellow}$2${default}"
                 ;;
             error)
-                echo -e "\n${red}$1${default}"
+                echo -e "\n${red}$2${default}"
                 ;;
         esac
     else
@@ -72,7 +72,7 @@ function report_status {
 
 ### 预处理
 function pre_setup {
-    report_status "设置国内PYPI清华镜像源..."
+    report_status "info" "设置国内PYPI清华镜像源..."
     [ ! -d ${HOME}/.pip ] && mkdir ${HOME}/.pip
     sudo /bin/sh -c "cat > ${HOME}/.pip/pip.conf" << EOF
 [global]
@@ -82,24 +82,24 @@ index-url = https://pypi.tuna.tsinghua.edu.cn/simple
 trusted-host=pypi.tuna.tsinghua.edu.cn
 
 EOF
-    report_status "配置用户组..."
+    report_status "info" "配置用户组..."
     if grep -q "dialout" </etc/group && ! grep -q "dialout" <(groups "${USER}"); then
-        sudo usermod -a -G dialout "${USER}" && report_status "已将用户${USER}添加到dialout用户组!" "ok"
+        sudo usermod -a -G dialout "${USER}" && report_status "info" "已将用户${USER}添加到dialout用户组!"
     fi
 
     if grep -q "tty" </etc/group && ! grep -q "tty" <(groups "${USER}"); then
-        sudo usermod -a -G tty "${USER}" && report_status "已将用户${USER}添加到tty用户组!" "ok"
+        sudo usermod -a -G tty "${USER}" && report_status "info" "已将用户${USER}添加到tty用户组!"
     fi
 
     if grep -q "input" </etc/group && ! grep -q "input" <(groups "${USER}"); then
-        sudo usermod -a -G input "${USER}" && report_status "已将用户${USER}添加到input用户组!" "ok"
+        sudo usermod -a -G input "${USER}" && report_status "info" "已将用户${USER}添加到input用户组!"
     fi
 }
 
 ### 克隆项目
 function git_clone {
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        report_status "克隆$1..."
+        report_status "info" "克隆$1..."
         # 执行 git clone 命令
         if [ ! -z "$3" ]; then
             git clone $3 $2
@@ -108,14 +108,14 @@ function git_clone {
         fi        
         # 检查 git clone 命令的返回状态码
         if [ $? -eq 0 ]; then
-            report_status "克隆完成" "ok"
+            report_status "info" "克隆完成"
             break
         else
             ((RETRY_COUNT++))
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                report_status "克隆失败，开始第$RETRY_COUNT次重试..." "warning"
+                report_status "warning" "克隆失败，开始第$RETRY_COUNT次重试..."
             else
-                report_status "克隆失败，已达到最大尝试次数，请稍后再试..." "error"
+                report_status "error" "克隆失败，已达到最大尝试次数，请稍后再试..."
                 exit 1
             fi
         fi
@@ -145,19 +145,19 @@ function install_klipper {
     PKGLIST="${PKGLIST} stm32flash dfu-util libnewlib-arm-none-eabi"
     PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0 pkg-config"
 
-    report_status "更新软件源列表..."
+    report_status "info" "更新软件源列表..."
     sudo apt-get update
 
-    report_status "安装所需软件..."
+    report_status "info" "安装所需软件..."
     sudo apt-get install --yes ${PKGLIST}
 
-    report_status "创建用于Klipper的Python虚拟空间..."
+    report_status "info" "创建用于Klipper的Python虚拟空间..."
     virtualenv -p python3 ${KLIPPY_ENV_DIR}
 
-    report_status "安装Python依赖..."
+    report_status "info" "安装Python依赖..."
     ${KLIPPY_ENV_DIR}/bin/pip install -r ${KLIPPER_DIR}/scripts/klippy-requirements.txt
 
-    report_status "配置Klipper系统服务..."
+    report_status "info" "配置Klipper系统服务..."
     # KLIPPER_ARGS="/home/samuel/klipper/klippy/klippy.py /home/samuel/printer_data/config/printer.cfg -l /home/samuel/printer_data/logs/klippy.log -a /tmp/klippy_uds"
     sudo /bin/sh -c "cat > ${KLIPPER_ENV_FILE}" << EOF
 KLIPPER_ARGS="${KLIPPER_DIR}/klippy/klippy.py ${KLIPPER_CONFIG} -l ${KLIPPER_LOG} -a ${KLIPPER_SOCKET}"
@@ -206,10 +206,10 @@ function install_moonraker {
 
 ### 安装Mainsail
 function install_mainsail {
-    report_status "获取Mainsail文件..."
+    report_status "info" "获取Mainsail文件..."
     [ ! -d ${MAINSAIL_DIR} ] && mkdir ${MAINSAIL_DIR}
     wget -q -O ${MAINSAIL_DIR}/mainsail.zip https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
-    report_status "安装Mainsail..."
+    report_status "info" "安装Mainsail..."
     sudo apt-get install --yes nginx
 
     sudo /bin/sh -c  "cat > /etc/nginx/conf.d/upstreams.conf" << EOF
@@ -323,7 +323,7 @@ function configure_can_interface {
     sudo modprobe can
     if [ $? -eq 0 ]
     then
-        report_status "添加CAN网络配置..."
+        report_status "info" "添加CAN网络配置..."
         sudo /bin/sh -c  "cat > /etc/network/interfaces.d/can0" << EOF
 allow-hotplug can0
 iface can0 can static
@@ -332,7 +332,7 @@ iface can0 can static
 
 EOF
     else
-        report_status "因内核不支持CAN，故取消CAN网络配置..." "warning"
+        report_status "info" "因内核不支持CAN，故取消CAN网络配置..." "warning"
     fi
 }
 
@@ -375,13 +375,13 @@ function install_timelapse {
 
 ### gcode_shell_command，用于在gcode中执行shell脚本
 function install_gcode_shell_command {
-    report_status "安装gcode_shell_command..."
+    report_status "info" "安装gcode_shell_command..."
     wget -q -O ~/klipper/klippy/extras/gcode_shell_command.py https://mirror.ghproxy.com/https://raw.githubusercontent.com/th33xitus/kiauh/master/resources/gcode_shell_command.py
 }
 
 ### 加速度测试所需依赖
 function install_input_shaper {
-    report_status "安装加速度测试依赖包..."
+    report_status "info" "安装加速度测试依赖包..."
     sudo apt-get install --yes python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
     ~/klippy-env/bin/pip install -v numpy
 }
@@ -441,7 +441,7 @@ echo '
 ████        ╚██╗ ██╔╝██╔══██║╚════██║   ██║          ████
 ████         ╚████╔╝ ██║  ██║███████║   ██║          ████
 ████          ╚═══╝  ╚═╝  ╚═╝╚══════╝   ╚═╝          ████
-████           遇到问题不要怕,加群找@三木            ████
+████          遇到问题不要怕。扫码加群找@三木           ████
 █████████████████████████████████████████████████████████
 █████████████████████████████████████████████████████████
 ████ ▄▄▄▄▄ █▀▀ ▄   ██ ▀ █ ▀█▀▄▀▄ ▄  ▀▀▀█ ▀▀▀ █ ▄▄▄▄▄ ████
@@ -487,36 +487,33 @@ c) KlipperScreen是用来控制Klipper的触摸屏界面
     使用文档：https://klipperscreen.readthedocs.io/en/latest
 d) Gcode Shell Command是Klipper用来执行shell脚本的插件
     使用文档：https://github.com/th33xitus/kiauh/blob/master/docs/gcode_shell_command.md
-e) 无限位归零插件是用于Klipper的增强插件
-    使用文档：https://github.com/eamars/sensorless_homing_helper/blob/main/readme_zh_cn.md
-f) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖
+e) Input Shaper依赖是Klipper使用Input Shaper功能测试必须的系统依赖
     使用文档：https://www.klipper3d.org/Measuring_Resonances.html
-g) Crowsnest是用来管理和使用摄像头的独立服务组件
+f) Crowsnest是用来管理和使用摄像头的独立服务组件
     使用文档：https://github.com/mainsail-crew/crowsnest
-h) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
+g) Timelapse是Moonraker的延时摄影插件，可通过Mainsail控制
     使用文档：https://github.com/mainsail-crew/moonraker-timelapse
-i) TMC驱动自动调谐插件可以帮助Klipper动态调整TMC驱动的相应参数，减轻运行噪音
+h) TMC驱动自动调谐插件可以帮助Klipper动态调整TMC驱动的相应参数，减轻运行噪音
     使用文档：https://github.com/andrewmcgr/klipper_tmc_autotune
-j) LED Effects是用于实现RGB灯效的Klipper插件
+i) LED Effects是用于实现RGB灯效的Klipper插件
     使用文档：https://github.com/julianschill/klipper-led_effect/blob/master/docs/LED_Effect.md
-k) LazyFirmware帮助懒人一键升级3D打印机控制板的Klipper固件
+j) LazyFirmware帮助懒人一键升级3D打印机控制板的Klipper固件
     使用文档：https://github.com/Samuel-0-0/LazyFirmware
 
 注意：部分插件需要自行修改配置文件，请查看使用文档。
 
 请选择需要的项目（↑↓方向键选择，空格键选中/取消，TAP键切换）：\
             " 42 108 11 \
-            "a" "Klipper及Moonraker - 必须的组件" ON \
+            "a" "Klipper&Moonraker - 必须的组件" ON \
             "b" "Mainsail - WEBUI控制界面" OFF \
             "c" "KlipperScreen - 触摸屏控制界面" OFF \
             "d" "Gcode Shell Command - 执行Shell插件" ON \
-            "e" "Sensorless Homing Helper - 无限位归零插件" OFF \
-            "f" "Input Shaper - 加速度测试依赖" ON \
-            "g" "Crowsnest - 摄像头服务" OFF \
-            "h" "Timelapse - 延时摄影插件" OFF \
-            "i" "Klipper TMC Autotune - TMC驱动自动调谐插件" ON \
-            "j" "LED Effects - RGB灯效插件" OFF \
-            "k" "LazyFirmware - 一键升级klipper固件" ON \
+            "e" "Input Shaper - 加速度测试依赖" ON \
+            "f" "Crowsnest - 摄像头服务" OFF \
+            "g" "Timelapse - 延时摄影插件" OFF \
+            "h" "Klipper TMC Autotune - TMC驱动自动调谐插件" ON \
+            "i" "LED Effects - RGB灯效插件" OFF \
+            "j" "LazyFirmware - 一键升级klipper固件" ON \
             3>&1 1>&2 2>&3)
     exitstatus=$?
     if [ $exitstatus = 0 ]; then
@@ -527,13 +524,12 @@ k) LazyFirmware帮助懒人一键升级3D打印机控制板的Klipper固件
             b) install_mainsail ;;
             c) install_KlipperScreen ;;
             d) install_gcode_shell_command ;;
-            e) install_sensorless_homing ;;
-            f) install_input_shaper ;;
-            g) install_crowsnest ;;
-            h) install_timelapse ;;
-            i) install_klipper_tmc_autotune ;;
-            j) install_klipper_led_effect ;;
-            k) install_lazyfirmware ;;
+            e) install_input_shaper ;;
+            f) install_crowsnest ;;
+            g) install_timelapse ;;
+            h) install_klipper_tmc_autotune ;;
+            i) install_klipper_led_effect ;;
+            j) install_lazyfirmware ;;
             esac
         done
     else
