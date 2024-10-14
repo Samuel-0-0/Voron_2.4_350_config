@@ -121,8 +121,9 @@ function push_config {
   #合并
   git add . -v
   current_date=$(date +"%Y-%m-%d %T")
-  read -p "更新说明:" babala
-  git commit -m "$babala [$m1,$m2,$m3]"
+  #read -p "更新说明:" babala
+  #git commit -m "$babala [$m1,$m2,$m3]"
+  git commit -m "$1 [$m1,$m2,$m3]"
   RETRY_COUNT=0
   git_push
 }
