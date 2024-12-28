@@ -13,16 +13,16 @@ Voron v2.4 r2 350mm
 * 热床铝板：国产铣平
 
 ## 电气硬件
-* 上位机：Intel(R) Pentium(R) CPU N3710 @ 1.60GHz ~2GB 内存, 64GB SSD
-* 主板：BigTreeTech OctoPus Pro v1.0 *1
+* 上位机：Intel(R) Z8350 ~2GB 内存, 36GB SSD
+* 主板：BigTreeTech Kraken v1.0 *1
 * 打印头控制板：[自制VAST sb-can](https://docs.529300529.xyz/vast/sb-can/) *1
-* XY驱动：BigTreeTech 5160 Pro v1.0 *2 @48V
-* Z驱动：FYETC S2209 v3.1 *4 @24V
+* XY驱动：主板自带 TMC2160 *2 @48V
+* Z驱动：主板自带 TMC2160 *4 @48V
 * 耗材检测：BigTreeTech Smart Filament Sensor *1
 * USB摄像头：Huawei HiCamera *1
-* AB电机：LDO-42STH48-2504AC *2
+* AB电机：MOONS MS17HDBP4200 *2
 * Z电机：KF-4242-EA2B001 *4
-* 挤出机：Orbiter v1.5 with LDO-36STH20-1004AHG *1
+* 挤出机：Orbiter v2.0 *1
 * 电源：MeanWell UHP-350-24 *1、MeanWell UHP-350-48 *1
 * SSR：DELIXI CDG1-1DA-20A *1
 * 热床加热垫：AC 650W *1
