@@ -6,6 +6,7 @@ config/.moonraker.conf.bkp
 config/printer-*
 config/crowsnest.conf.*
 config/input_shaper/*
+config/K-ShakeTune_results/*
 gcodes/*
 logs/*
 timelapse/*

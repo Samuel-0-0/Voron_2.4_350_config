@@ -1,8 +1,18 @@
 #!/bin/bash
 
-# Copyright (C) 2024 Samuel Wang <imhsaw@gmail.com>
+########################################################################################################################
+# VORON 2.4  350mm  打印机配置文件
 #
+# 版权所有 (C) 2025  Samuel Wang    Discord: Samuel-0-0#0576    Github: Samuel-0-0    Bilibili: Samuel-0_0
+#
+# 本文件可以根据GNU GPLv3许可协议进行分发
 # This file may be distributed under the terms of the GNU GPLv3 license
+#
+# 根据你的设置编辑此文件
+#
+# 目标：一键安装Klipper及其他依赖
+#
+
 
 ################################################################
 # 快速使用：
@@ -315,6 +325,8 @@ EOF
     unzip -o ${MAINSAIL_DIR}/mainsail.zip -d ${MAINSAIL_DIR}
     rm ${MAINSAIL_DIR}/mainsail.zip
 
+    chmod og+x "${HOME}"
+    
     sudo systemctl restart nginx
 }
 
@@ -376,7 +388,7 @@ function install_timelapse {
 ### gcode_shell_command，用于在gcode中执行shell脚本
 function install_gcode_shell_command {
     report_status "info" "安装gcode_shell_command..."
-    wget -q -O ~/klipper/klippy/extras/gcode_shell_command.py https://mirror.ghproxy.com/https://raw.githubusercontent.com/th33xitus/kiauh/master/resources/gcode_shell_command.py
+    wget -q -O ~/klipper/klippy/extras/gcode_shell_command.py https://raw.githubusercontent.com/dw-0/kiauh/blob/master/resources/gcode_shell_command.py
 }
 
 ### 加速度测试所需依赖
@@ -384,16 +396,6 @@ function install_input_shaper {
     report_status "info" "安装加速度测试依赖包..."
     sudo apt-get install --yes python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
     ~/klippy-env/bin/pip install -v numpy
-}
-
-### 无限位归零插件
-function install_sensorless_homing {
-    if [ -d "sensorless_homing_helper" ]; then
-        rm -rf sensorless_homing_helper
-    fi
-    RETRY_COUNT=0
-    git_clone "SENSORLESS" ${SENSORLESS_GITREPO}
-    source sensorless_homing_helper/install.sh
 }
 
 ### TMC驱动自动调谐插件
@@ -425,7 +427,7 @@ function install_lazyfirmware {
     git_clone "KATAPULT" ${KATAPULT_GITREPO}
     RETRY_COUNT=0
     git_clone "LAZYFIRMWARE" ${LAZYFIRMWARE_GITREPO}
-    pip3 install pyserial
+    pip3 install pyserial --break-system-packages
     mkdir ${PRINTER_DATA}/config/lazyfirmware
     cp ${HOME}/LazyFirmware/config/config.cfg ${PRINTER_DATA}/config/lazyfirmware/config.cfg
 }
