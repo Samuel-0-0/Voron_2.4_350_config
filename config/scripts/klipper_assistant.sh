@@ -35,19 +35,19 @@ set -e
 SYSTEMD_DIR="/etc/systemd/system"
 KLIPPER_USER=${USER}
 KLIPPER_GROUP=${KLIPPER_USER}
-KLIPPER_DIR="${HOME}/klipper"
-MOONRAKER_DIR="${HOME}/moonraker"
-MAINSAIL_DIR="${HOME}/mainsail"
-KLIPPERSCREEN_DIR="${HOME}/KlipperScreen"
-KLIPPY_ENV_DIR="${HOME}/klippy-env"
-MOONRAKER_ENV_DIR="${HOME}/moonraker-env"
-KLIPPERSCREEN_ENV_DIR="${HOME}/.KlipperScreen-env"
-PRINTER_DATA="${HOME}/printer_data"
+KLIPPER_DIR="/home/${USER}/klipper"
+MOONRAKER_DIR="/home/${USER}/moonraker"
+MAINSAIL_DIR="/home/${USER}/mainsail"
+KLIPPERSCREEN_DIR="/home/${USER}/KlipperScreen"
+KLIPPY_ENV_DIR="/home/${USER}/klippy-env"
+MOONRAKER_ENV_DIR="/home/${USER}/moonraker-env"
+KLIPPERSCREEN_ENV_DIR="/home/${USER}/.KlipperScreen-env"
+PRINTER_DATA="/home/${USER}/printer_data"
 KLIPPER_ENV_FILE="${PRINTER_DATA}/systemd/klipper.env"
 KLIPPER_CONFIG="${PRINTER_DATA}/config/printer.cfg"
 KLIPPER_LOG="${PRINTER_DATA}/logs/klippy.log"
 KLIPPER_SOCKET="/tmp/klippy_uds"
-MAX_RETRIES=10
+MAX_RETRIES=5
 KLIPPER_GITREPO="https://github.com/Klipper3d/klipper.git"
 MOONRAKER_GITREPO="https://github.com/Arksine/moonraker.git"
 KLIPPERSCREEN_GITREPO="https://github.com/jordanruthe/KlipperScreen.git"
@@ -90,8 +90,24 @@ function REPORT_STATUS {
 ### 预处理
 function pre_setup {
     REPORT_STATUS info "设置国内PYPI镜像源..."
-    python3 -m pip install -i https://repo.huaweicloud.com/repository/pypi/simple/ --upgrade pip
-    pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
+    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    EXTERNALLY_MANAGED_PATH="/usr/lib/python${PYTHON_VERSION}/EXTERNALLY-MANAGED"
+    if [ -e "$EXTERNALLY_MANAGED_PATH" ]; then
+        echo "发现 ${EXTERNALLY_MANAGED_PATH}，正在删除以启用 pip 自由安装..."
+        sudo rm -rf "$EXTERNALLY_MANAGED_PATH"
+    fi
+    if ! command -v pip &>/dev/null; then
+        echo "pip 未安装，正在安装..."
+        sudo apt update
+        sudo apt install python3-pip -y
+    else
+        python3 -m pip install -i https://repo.huaweicloud.com/repository/pypi/simple/ --upgrade pip
+        pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
+    fi
+
+    REPORT_STATUS info "添加中文字体支持..."
+    sudo apt update
+    sudo apt install fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-color-emoji fonts-wqy-zenhei fonts-wqy-microhei -y
 
     REPORT_STATUS info "配置用户组..."
     if grep -q "dialout" </etc/group && ! grep -q "dialout" <(groups "${USER}"); then
@@ -190,7 +206,6 @@ After=network-online.target
 Wants=udev.target
 
 [Install]
-Alias=klippy
 WantedBy=multi-user.target
 
 [Service]
@@ -218,7 +233,10 @@ function install_moonraker {
         rm -rf ${MOONRAKER_ENV_DIR}
     fi
     git_clone "MOONRAKER" ${MOONRAKER_GITREPO}
-    source ${MOONRAKER_DIR}/scripts/install-moonraker.sh
+    (
+        cd ${MOONRAKER_DIR} || exit 1
+        ./scripts/install-moonraker.sh
+    )
     #source ${MOONRAKER_DIR}/scripts/set-policykit-rules.sh
 }
 
@@ -314,22 +332,29 @@ server {
     }
     location ~ ^/(printer|api|access|machine|server)/ {
         proxy_pass http://apiserver\$request_uri;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Scheme \$scheme;
+        proxy_read_timeout 600;
     }
     location /webcam/ {
+        postpone_output 0;
+        proxy_buffering off;
+        proxy_ignore_headers X-Accel-Buffering;
+        access_log off;
+        error_log off;
         proxy_pass http://mjpgstreamer1/;
     }
     location /webcam2/ {
+        postpone_output 0;
+        proxy_buffering off;
+        proxy_ignore_headers X-Accel-Buffering;
+        access_log off;
+        error_log off;
         proxy_pass http://mjpgstreamer2/;
-    }
-    location /webcam3/ {
-        proxy_pass http://mjpgstreamer3/;
-    }
-    location /webcam4/ {
-        proxy_pass http://mjpgstreamer4/;
     }
 }
 
@@ -339,8 +364,9 @@ EOF
     unzip -o ${MAINSAIL_DIR}/mainsail.zip -d ${MAINSAIL_DIR}
     rm ${MAINSAIL_DIR}/mainsail.zip
 
-    chmod o+x "${HOME}"
-    
+    chmod o+x ${HOME}
+    chmod -R o+rX ${MAINSAIL_DIR}
+
     sudo systemctl restart nginx
     REPORT_STATUS info "Mainsail安装完成"
 }
@@ -466,7 +492,7 @@ function install_lazyfirmware {
     pip3 install pyserial --break-system-packages
     if [ ! -f "${PRINTER_DATA}/config/lazyfirmware/config.cfg" ]; then
         mkdir ${PRINTER_DATA}/config/lazyfirmware
-        cp ${HOME}/LazyFirmware/config/config.cfg ${PRINTER_DATA}/config/lazyfirmware/config.cfg
+        cp /home/${USER}/LazyFirmware/config/config.cfg ${PRINTER_DATA}/config/lazyfirmware/config.cfg
     else
         REPORT_STATUS info "配置文件已存在，不进行覆盖"
     fi
