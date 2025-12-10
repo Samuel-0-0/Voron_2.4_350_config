@@ -100,6 +100,7 @@ function pre_setup {
         echo "pip 未安装，正在安装..."
         sudo apt update
         sudo apt install python3-pip -y
+        pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
     else
         python3 -m pip install -i https://repo.huaweicloud.com/repository/pypi/simple/ --upgrade pip
         pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
@@ -111,15 +112,15 @@ function pre_setup {
 
     REPORT_STATUS info "配置用户组..."
     if grep -q "dialout" </etc/group && ! grep -q "dialout" <(groups "${USER}"); then
-        sudo usermod -a -G dialout "${USER}" && report_status info "已将用户${USER}添加到dialout用户组!"
+        sudo usermod -a -G dialout "${USER}" && REPORT_STATUS info "已将用户${USER}添加到dialout用户组!"
     fi
 
     if grep -q "tty" </etc/group && ! grep -q "tty" <(groups "${USER}"); then
-        sudo usermod -a -G tty "${USER}" && report_status info "已将用户${USER}添加到tty用户组!"
+        sudo usermod -a -G tty "${USER}" && REPORT_STATUS info "已将用户${USER}添加到tty用户组!"
     fi
 
     if grep -q "input" </etc/group && ! grep -q "input" <(groups "${USER}"); then
-        sudo usermod -a -G input "${USER}" && report_status info "已将用户${USER}添加到input用户组!"
+        sudo usermod -a -G input "${USER}" && REPORT_STATUS info "已将用户${USER}添加到input用户组!"
     fi
 }
 
@@ -248,7 +249,7 @@ function install_mainsail {
     https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip; then
         REPORT_STATUS info "成功！"
     else
-        REPORT_STATUS info "失败，请检查网络或URL。"
+        REPORT_STATUS error "失败，请检查网络或URL。"
         exit 1
     fi
     REPORT_STATUS info "安装Mainsail..."
@@ -440,7 +441,7 @@ function install_gcode_shell_command {
     https://raw.githubusercontent.com/dw-0/kiauh/master/resources/gcode_shell_command.py; then
         REPORT_STATUS info "成功！"
     else
-        REPORT_STATUS info "下载失败，请检查网络或URL。"
+        REPORT_STATUS error "下载失败，请检查网络或URL。"
         exit 1
     fi
 }
@@ -493,8 +494,6 @@ function install_lazyfirmware {
     if [ ! -f "${PRINTER_DATA}/config/lazyfirmware/config.cfg" ]; then
         mkdir ${PRINTER_DATA}/config/lazyfirmware
         cp /home/${USER}/LazyFirmware/config/config.cfg ${PRINTER_DATA}/config/lazyfirmware/config.cfg
-    else
-        REPORT_STATUS info "配置文件已存在，不进行覆盖"
     fi
     REPORT_STATUS info "LazyFirmware安装完成"
 }

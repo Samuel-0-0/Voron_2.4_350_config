@@ -45,17 +45,20 @@ body {
 .theme--dark.v-app-bar.v-toolbar.v-sheet {
     background-color: rgba(0, 0, 0, 0.32)!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .theme--dark.v-navigation-drawer,
 .v-color-picker__controls {
     background: rgba(0, 0, 0, 0.32);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .v-application .panel {
     background-color: rgba(0, 0, 0, 0.48)!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: none!important;
     border: none;
 }
@@ -102,6 +105,7 @@ body {
 .echarts-tooltip {
     background-color: rgba(0, 0, 0, 0.43)!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: none!important;
     box-shadow: none!important;
 }
@@ -110,6 +114,7 @@ body {
     border-radius: 15px;
     background-color: rgba(0, 0, 0, 0.85)!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .v-application .grey.darken-3.v-btn,
@@ -127,6 +132,19 @@ body {
     border-radius: 8px;
 }
 
+.v-alert__border--left, .v-alert__border--right{
+    bottom: 5px;
+    top: 5px;
+}
+
+div[data-v-05f75be0], .v-image__image--cover {
+    border-radius: 15px;
+}
+
+.v-alert--border, .webcamBackground {
+    border-radius: 15px !important;
+}
+
 .webcamImage {
     margin-bottom: 30px;
     background-color: transparent!important;
@@ -138,6 +156,7 @@ body {
     right: 6px!important;
     background-color: rgba(0, 0, 0, 0.33)!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
     border-top-left-radius: 8px;
     margin-bottom: 10px
@@ -151,6 +170,7 @@ div[data-v-11632d50] {
 .v-dialog,
 .v-sheet.v-card,
 .v-tooltip__content.menuable__content__active {
+    background-color: rgba(0, 0, 0, 0.43) !important;
     border: none;
     border-radius: 15px!important;
 }
@@ -174,6 +194,7 @@ x-vue-echarts text{
 .fluidd .v-expansion-panel{
     background-color: rgba(0, 0, 0, 0.24)!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: none!important;
     box-shadow: none!important;
     border-radius: 15px;
@@ -223,6 +244,7 @@ x-vue-echarts text{
     background-color: rgb(0 0 0 /12%)!important;
     border: none!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .fluidd .v-navigation-drawer .v-list-item--active {
@@ -242,6 +264,7 @@ x-vue-echarts text{
     background-color: rgb(0 0 0 / 15%)!important;
     border-radius: 15px!important;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .fluidd .v-data-table>.v-data-table__wrapper tbody tr:hover td:first-child {

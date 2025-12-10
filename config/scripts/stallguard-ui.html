@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh_cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klipper Stallguard 数据查看器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #45a049;
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger {
+            background-color: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background-color: #da190b;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .log-container {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .log-entry.sent {
+            color: #0066cc;
+        }
+        
+        .log-entry.received {
+            color: #006600;
+        }
+        
+        .log-entry.error {
+            color: #cc0000;
+        }
+        
+        .object-list {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .object-item {
+            padding: 5px;
+            margin: 2px 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .object-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .object-item.selected {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .connection-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .data-info {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .data-info span {
+            margin-right: 20px;
+        }
+        
+        .log-container {
+            max-height: 200px;
+        }
+        
+        @media (max-width: 768px) {
+            .connection-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Klipper Stallguard 数据查看器</h1>
+        
+        <div class="connection-info">
+            <div class="form-group">
+                <label for="moonrakerUrl">Moonraker API 地址：</label>
+                <input type="text" id="moonrakerUrl" value="http://192.168.88.20:7125" placeholder="http://192.168.88.20:7125">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <button class="btn" id="connectBtn">连接到 Moonraker</button>
+            <button class="btn btn-danger" id="disconnectBtn" disabled>断开连接</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div id="objectSelection" style="display: none;">
+            <h3>选择 TMC 对象:</h3>
+            <div id="tmcObjects" class="object-list"></div>
+            <button class="btn" id="subscribeBtn" disabled>订阅 Stallguard 数据</button>
+        </div>
+        
+        <div id="chartSection" style="display: none;">
+            <h3>📈 Stallguard 数据</h3>
+            <div class="chart-controls">
+                <button class="btn btn-small" id="pauseBtn">⏸️ 暂停</button>
+                <button class="btn btn-small" id="resumeBtn" disabled>▶️ 恢复</button>
+                <button class="btn btn-small" id="resetZoomBtn">🔍 重置放大</button>
+                <button class="btn btn-small" id="clearDataBtn">🗑️ 清除数据</button>
+                <label>
+                    <input type="checkbox" id="autoscaleBtn" checked> 自动缩放
+                </label>
+            </div>
+            <div class="data-info">
+                <span>📊 数据点：<strong id="dataCount">0</strong></span>
+                <span>⏱️ 缓存时间：<strong id="bufferTime">0s</strong></span>
+                <span>📈 SG 范围：<strong id="sgRange">-</strong></span>
+                <span>🔋 CS 范围：<strong id="csRange">-</strong></span>
+            </div>
+            <div class="chart-container">
+                <canvas id="stallguardChart"></canvas>
+            </div>
+        </div>
+        
+        <div id="dataOutput" style="display: none;">
+            <h3>📜 调试日志：</h3>
+            <div id="logContainer" class="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        class KlipperDumpViewer {
+            constructor() {
+                this.moonrakerUrl = '';
+                this.websocket = null;
+                this.oneshotToken = '';
+                this.tmcObjects = [];
+                this.selectedObject = null;
+                this.isConnected = false;
+                this.messageId = 1;
+                this.dataBuffer = [];
+                this.memoryDepthMs = 180000;
+                this.isPaused = false;
+                this.chart = null;
+                this.startTime = null;
+                this.logBuffer = [];
+                this.maxLogEntries = 100;
+                
+                this.initEventListeners();
+            }
+            
+            initEventListeners() {
+                document.getElementById('connectBtn').addEventListener('click', () => this.connect());
+                document.getElementById('disconnectBtn').addEventListener('click', () => this.disconnect());
+                document.getElementById('subscribeBtn').addEventListener('click', () => this.subscribeToStallguard());
+                document.getElementById('pauseBtn').addEventListener('click', () => this.pauseData());
+                document.getElementById('resumeBtn').addEventListener('click', () => this.resumeData());
+                document.getElementById('resetZoomBtn').addEventListener('click', () => this.resetZoom());
+                document.getElementById('clearDataBtn').addEventListener('click', () => this.clearData());
+                document.getElementById('memoryDepth').addEventListener('change', (e) => {
+                    this.memoryDepthMs = parseFloat(e.target.value) * 60000;
+                });
+            }
+            
+            showStatus(message, type = 'info') {
+                const statusEl = document.getElementById('status');
+                statusEl.className = `status ${type}`;
+                statusEl.textContent = message;
+                statusEl.style.display = 'block';
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                
+                // Add to FIFO buffer
+                this.logBuffer.push(entry);
+                
+                // Keep only last 100 entries
+                if (this.logBuffer.length > this.maxLogEntries) {
+                    const removedEntry = this.logBuffer.shift();
+                    if (removedEntry.parentNode) {
+                        removedEntry.parentNode.removeChild(removedEntry);
+                    }
+                }
+                
+                logContainer.appendChild(entry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            async connect() {
+                this.moonrakerUrl = document.getElementById('moonrakerUrl').value.trim();
+                
+                if (!this.moonrakerUrl) {
+                    this.showStatus('请输入 Moonraker API 地址', 'error');
+                    return;
+                }
+                
+                try {
+                    this.showStatus('正在连接到 Moonraker...', 'info');
+                    document.getElementById('connectBtn').disabled = true;
+                    
+                    // Step 1: Get oneshot token
+                    const tokenResponse = await fetch(`${this.moonrakerUrl}/access/oneshot_token`);
+                    if (!tokenResponse.ok) {
+                        throw new Error(`获取 oneshot token 失败： ${tokenResponse.status}`);
+                    }
+                    
+                    const tokenData = await tokenResponse.json();
+                    this.oneshotToken = tokenData.result;
+                    this.log(`接收到 oneshot token： ${this.oneshotToken}`, 'received');
+                    
+                    // Step 2: Connect to the Bridge WebSocket
+                    const wsUrl = this.moonrakerUrl.replace('http', 'ws') + `/klippysocket?token=${this.oneshotToken}`;
+                    this.log(`正在连接到 WebSocket： ${wsUrl}`, 'sent');
+                    
+                    this.websocket = new WebSocket(wsUrl);
+                    
+                    this.websocket.onopen = () => {
+                        this.isConnected = true;
+                        this.showStatus('通过 WebSocket 连接到 Klipper', 'success');
+                        this.log('WebSocket 连接已完成', 'received');
+                        document.getElementById('disconnectBtn').disabled = false;
+                        document.getElementById('dataOutput').style.display = 'block';
+                        
+                        // Request object list
+                        this.requestObjectList();
+                    };
+                    
+                    this.websocket.onmessage = (event) => {
+                        this.handleMessage(event.data);
+                    };
+                    
+                    this.websocket.onclose = () => {
+                        this.isConnected = false;
+                        this.showStatus('WebSocket 连接已关闭', 'error');
+                        this.log('WebSocket 连接已关闭', 'error');
+                        this.resetUI();
+                    };
+                    
+                    this.websocket.onerror = (error) => {
+                        this.showStatus('WebSocket 遇到错误', 'error');
+                        this.log(`WebSocket 错误: ${error}`, 'error');
+                        this.resetUI();
+                    };
+                    
+                } catch (error) {
+                    this.showStatus(`连接失败： ${error.message}`, 'error');
+                    this.log(`连接失败： ${error.message}`, 'error');
+                    this.resetUI();
+                }
+            }
+            
+            disconnect() {
+                if (this.websocket) {
+                    this.websocket.close();
+                }
+                this.resetUI();
+            }
+            
+            resetUI() {
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.getElementById('subscribeBtn').disabled = true;
+                document.getElementById('objectSelection').style.display = 'none';
+                this.selectedObject = null;
+                this.tmcObjects = [];
+                
+                // Clear log buffer
+                this.logBuffer = [];
+                const logContainer = document.getElementById('logContainer');
+                if (logContainer) {
+                    logContainer.innerHTML = '';
+                }
+            }
+            
+            requestObjectList() {
+                const message = {
+                    id: this.messageId++,
+                    method: "objects/list",
+                    params: {}
+                };
+                
+                this.sendMessage(message);
+            }
+            
+            sendMessage(message) {
+                if (this.websocket && this.isConnected) {
+                    const messageStr = JSON.stringify(message);
+                    this.websocket.send(messageStr);
+                    this.log(`发送： ${messageStr}`, 'sent');
+                }
+            }
+            
+            handleMessage(data) {
+                try {
+                    const message = JSON.parse(data);
+                    this.log(`收到： ${data}`, 'received');
+                    
+                    if (message.result && message.result.objects) {
+                        this.handleObjectList(message.result.objects);
+                    } else if (message.params && message.params.data) {
+                        this.handleStallguardData(message.params.data);
+                    }
+                } catch (error) {
+                    this.log(`解析消息时出错： ${error.message}`, 'error');
+                }
+            }
+            
+            handleObjectList(objects) {
+                // Filter TMC objects
+                this.tmcObjects = objects.filter(obj => obj.startsWith('tmc'));
+                
+                if (this.tmcObjects.length === 0) {
+                    this.showStatus('没有找到TMC对象', 'error');
+                    return;
+                }
+                
+                this.showStatus(`发现 ${this.tmcObjects.length} 个 TMC 对象`, 'success');
+                this.displayTmcObjects();
+            }
+            
+            displayTmcObjects() {
+                const container = document.getElementById('tmcObjects');
+                container.innerHTML = '';
+                
+                this.tmcObjects.forEach(obj => {
+                    const item = document.createElement('div');
+                    item.className = 'object-item';
+                    item.textContent = obj;
+                    item.addEventListener('click', () => this.selectObject(obj, item));
+                    container.appendChild(item);
+                });
+                
+                document.getElementById('objectSelection').style.display = 'block';
+            }
+            
+            selectObject(objectName, element) {
+                // Remove previous selection
+                document.querySelectorAll('.object-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                
+                // Select new object
+                element.classList.add('selected');
+                this.selectedObject = objectName;
+                document.getElementById('subscribeBtn').disabled = false;
+                
+                this.log(`已选择对象： ${objectName}`, 'info');
+            }
+            
+            subscribeToStallguard() {
+                if (!this.selectedObject) {
+                    this.showStatus('请先选择 TMC 对象', 'error');
+                    return;
+                }
+                
+                // Extract stepper name (everything after first space)
+                const parts = this.selectedObject.split(' ');
+                const stepperName = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+                
+                const message = {
+                    id: `stallguard:${stepperName}`,
+                    method: "tmc/stallguard_dump",
+                    params: {
+                        name: stepperName
+                    }
+                };
+                
+                this.sendMessage(message);
+                this.showStatus(`从 ${stepperName} 订阅 stallguard 数据`, 'success');
+                this.initChart();
+                this.startTime = Date.now();
+            }
+            
+            initChart() {
+                const ctx = document.getElementById('stallguardChart').getContext('2d');
+                
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Stallguard 值',
+                            data: [],
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            yAxisID: 'y'
+                        }, {
+                            label: 'CS 值',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 0
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                title: {
+                                    display: true,
+                                    text: '秒'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Stallguard 值'
+                                },
+                                min: 0,
+                                max: 1000,
+                                beginAtZero: true,
+                                grid: {
+                                    drawOnChartArea: true
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'CS 值'
+                                },
+                                min: 0,
+                                max: 32,
+                                beginAtZero: true,
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            zoom: {
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                },
+                                pan: {
+                                    enabled: true,
+                                    mode: 'xy'
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+                
+                document.getElementById('chartSection').style.display = 'block';
+            }
+            
+            pauseData() {
+                this.isPaused = true;
+                document.getElementById('pauseBtn').disabled = true;
+                document.getElementById('resumeBtn').disabled = false;
+                this.showStatus('数据更新已暂停', 'info');
+            }
+            
+            resumeData() {
+                this.isPaused = false;
+                document.getElementById('pauseBtn').disabled = false;
+                document.getElementById('resumeBtn').disabled = true;
+                this.showStatus('数据更新已恢复', 'success');
+            }
+            
+            resetZoom() {
+                if (this.chart) {
+                    this.chart.resetZoom();
+                }
+            }
+            
+            clearData() {
+                this.dataBuffer = [];
+                if (this.chart) {
+                    this.chart.data.datasets[0].data = [];
+                    this.chart.data.datasets[1].data = [];
+                    this.chart.update('none');
+                }
+                this.updateDataInfo();
+                this.showStatus('数据已清除', 'info');
+            }
+            
+            handleStallguardData(data) {
+                if (this.isPaused) {
+                    return; // Skip updates when paused
+                }
+                
+                const currentTime = Date.now();
+                const relativeStartTime = this.startTime ? (this.startTime / 1000) : 0;
+                
+                // Add new data points
+                data.forEach(point => {
+                    const [timestamp, stallguard, cs] = point;
+                    const relativeTime = timestamp; // - relativeStartTime;
+                    
+                    this.dataBuffer.push({
+                        timestamp: timestamp,
+                        relativeTime: relativeTime,
+                        stallguard: stallguard,
+                        cs: cs,
+                        receivedAt: currentTime
+                    });
+                });
+                
+                // Clean old data based on memory depth
+                const cutoffTime = currentTime - this.memoryDepthMs;
+                this.dataBuffer = this.dataBuffer.filter(point => point.receivedAt > cutoffTime);
+                
+                // Update chart
+                if (this.chart) {
+                    this.updateChart();
+                }
+                
+                this.updateDataInfo();
+                
+                this.log(`已收到 ${data.length} 数据点。缓存大小： ${this.dataBuffer.length}`, 'received');
+                
+                // Display last few data points for debugging
+                if (data.length > 0) {
+                    const lastPoint = data[data.length - 1];
+                    this.log(`最新： 时间=${lastPoint[0].toFixed(3)}, SG=${lastPoint[1]}, CS=${lastPoint[2]}`, 'info');
+                }
+            }
+            
+            updateChart() {
+                if (!this.chart) return;
+                
+                const sgData = [];
+                const csData = [];
+                
+                this.dataBuffer.forEach(point => {
+                    const dataPoint = { x: point.relativeTime, y: point.stallguard };
+                    sgData.push(dataPoint);
+                    
+                    if (point.cs !== -1) {
+                        csData.push({ x: point.relativeTime, y: point.cs });
+                    }
+                });
+                
+                this.chart.data.datasets[0].data = sgData;
+                this.chart.data.datasets[1].data = csData;
+                
+                // Auto-scale if enabled
+                if (document.getElementById('autoscaleBtn').checked) {
+                    this.autoScale();
+                }
+                
+                this.chart.update('none'); // Update without animation for better performance
+            }
+            
+            autoScale() {
+                if (!this.chart || this.dataBuffer.length === 0) return;
+                
+                const sgValues = this.dataBuffer.map(p => p.stallguard).filter(v => v !== null);
+                const csValues = this.dataBuffer.map(p => p.cs).filter(v => v !== -1);
+                const timeValues = this.dataBuffer.map(p => p.relativeTime);
+                
+                if (sgValues.length > 0) {
+                    const sgMin = Math.min(...sgValues);
+                    const sgMax = Math.max(...sgValues);
+                    const sgPadding = Math.max(10, (sgMax - sgMin) * 0.1); // At least 10 units padding
+                    
+                    this.chart.options.scales.y.min = Math.max(0, sgMin - sgPadding);
+                    this.chart.options.scales.y.max = Math.min(1000, sgMax + sgPadding);
+                }
+                
+                if (csValues.length > 0) {
+                    const csMin = Math.min(...csValues);
+                    const csMax = Math.max(...csValues);
+                    const csPadding = Math.max(1, (csMax - csMin) * 0.1); // At least 1 unit padding
+                    
+                    this.chart.options.scales.y1.min = Math.max(0, csMin - csPadding);
+                    this.chart.options.scales.y1.max = csMax + csPadding;
+                }
+                
+                if (timeValues.length > 0) {
+                    const timeMin = Math.min(...timeValues);
+                    const timeMax = Math.max(...timeValues);
+                    const timePadding = Math.max(0.1, (timeMax - timeMin) * 0.02); // At least 0.1s padding
+                    
+                    this.chart.options.scales.x.min = timeMin - timePadding;
+                    this.chart.options.scales.x.max = timeMax + timePadding;
+                }
+            }
+            
+            updateDataInfo() {
+                document.getElementById('dataCount').textContent = this.dataBuffer.length;
+                
+                if (this.dataBuffer.length > 0) {
+                    const timeSpan = this.dataBuffer[this.dataBuffer.length - 1].relativeTime - this.dataBuffer[0].relativeTime;
+                    document.getElementById('bufferTime').textContent = `${timeSpan.toFixed(1)}s`;
+                    
+                    const sgValues = this.dataBuffer.map(p => p.stallguard).filter(v => v !== null);
+                    const csValues = this.dataBuffer.map(p => p.cs).filter(v => v !== -1);
+                    
+                    if (sgValues.length > 0) {
+                        const sgMin = Math.min(...sgValues);
+                        const sgMax = Math.max(...sgValues);
+                        document.getElementById('sgRange').textContent = `${sgMin} - ${sgMax}`;
+                    }
+                    
+                    if (csValues.length > 0) {
+                        const csMin = Math.min(...csValues);
+                        const csMax = Math.max(...csValues);
+                        document.getElementById('csRange').textContent = `${csMin} - ${csMax}`;
+                    }
+                } else {
+                    document.getElementById('bufferTime').textContent = '0s';
+                    document.getElementById('sgRange').textContent = '-';
+                    document.getElementById('csRange').textContent = '-';
+                }
+            }
+        }
+        
+        // Initialize the viewer when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new KlipperDumpViewer();
+        });
+    </script>
+</body>
+</html>
