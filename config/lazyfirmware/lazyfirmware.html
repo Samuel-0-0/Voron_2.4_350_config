@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LazyFirmware Manager</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; max-width: 800px; margin: 0 auto; }
+        
+        /* 卡片基础样式 */
+        .card { background: #1e1e1e; padding: 20px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        
+        /* 标题栏布局 (用于放置折叠按钮) */
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h1 { margin-bottom: 30px; color: #fff; }
+        h3 { margin-bottom: 8px; color: #fff; }
+        
+        /* 输入框与按钮样式 */
+        input, select { background: #333; color: #fff; border: 1px solid #444; padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 4px; }
+        label { display: block; margin-bottom: 4px; color: #aaa; font-size: 0.85em; }
+        button { cursor: pointer; padding: 10px 15px; border: none; border-radius: 4px; font-weight: 600; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* 颜色类 */
+        .btn-blue { background: #2196F3; color: white; }
+        .btn-green { background: #4CAF50; color: white; }
+        .btn-red { background: #f44336; color: white; }
+        .btn-orange { background: #ff9800; color: white; }
+        .btn-ghost { background: transparent; color: #aaa; padding: 5px 10px; font-size: 1.2em; }
+        .btn-ghost:hover { color: #fff; background: #333; }
+
+        /* 系统信息网格 */
+        .info-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 5px; }
+        .info-item { background: #2d2d2d; padding: 10px; border-radius: 6px; border: 1px solid #3d3d3d; }
+        .info-label { font-size: 0.8em; color: #888; margin-bottom: 5px; }
+        .info-value { font-size: 1.1em; font-weight: bold; color: #fff; }
+        .status-ok { color: #4CAF50; }
+        .status-error { color: #f44336; }
+        
+        /* 折叠动画 */
+        #sys-info-content { transition: max-height 0.3s ease-out, opacity 0.3s ease-out; max-height: 500px; opacity: 1; overflow: hidden; }
+        .collapsed { max-height: 0 !important; opacity: 0 !important; margin: 0 !important; padding: 0 !important; }
+
+        /* 日志窗口 */
+        #log-window {
+            background: #000; font-family: monospace; padding: 10px; 
+            height: 150px; overflow-y: auto; border-radius: 4px; 
+            border: 1px solid #333; color: #00ff00; font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>LazyFirmware 固件管理</h1>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>系统概览</h3>
+            <button class="btn-ghost" onclick="toggleInfo()" title="折叠/展开">▼</button>
+        </div>
+        
+        <div id="sys-info-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">系统版本</div>
+                    <div class="info-value" id="info-os">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">CPU/内存</div>
+                    <div class="info-value" id="info-cpu">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">CAN 状态</div>
+                    <div class="info-value" id="info-can">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Klipper 状态</div>
+                    <div class="info-value" id="info-klipper">检测中...</div>
+                </div>
+            </div>
+            <div style="text-align: right; margin-top: 10px;">
+                 <button class="btn-blue" style="padding: 5px 10px; font-size: 0.8em;" onclick="fetchSystemInfo()">刷新状态</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>控制台与日志</h3>
+        <div id="log-window">等待指令...</div>
+        <div class="flex-row">
+            <button class="btn-red" onclick="controlService('stop')">停止 Klipper</button>
+            <button class="btn-orange" onclick="controlService('restart')">重启 Klipper</button>
+            <button class="btn-green" onclick="controlService('start')">启动 Klipper</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="flex-row">
+            <button class="btn-green" onclick="saveConfig()">保存所有配置</button>
+            <button class="btn-blue" onclick="runUpdate()">一键全部更新</button>
+        </div>
+    </div>
+
+    <div id="config-container"></div>
+
+    <script>
+        // 自动获取当前 Moonraker 地址
+        const HOST = window.location.hostname;
+        const PORT = window.location.port || "7125";
+        const HTTP_URL = `http://${HOST}:${PORT}`;
+        const WS_URL = `ws://${HOST}:${PORT}/websocket`;
+
+        let currentConfig = {};
+        let ws = null;
+
+        // 切换折叠
+        function toggleInfo() {
+            const content = document.getElementById('sys-info-content');
+            const btn = document.querySelector('.btn-ghost');
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                btn.innerText = "▼";
+            } else {
+                content.classList.add('collapsed');
+                btn.innerText = "▲";
+            }
+        }
+
+        // 获取系统信息
+        async function fetchSystemInfo() {
+            try {
+                const res = await fetch(`${HTTP_URL}/machine/system_info`, { method: 'GET' });
+                const json = await res.json();
+                const result = json.result.system_info;
+
+                // 1. OS
+                const distName = result.distribution.name || "N/A";
+                const distVer = result.distribution.version || "";
+                document.getElementById('info-os').innerText = `${distName} / 版本号：${distVer}`;
+
+                // 2. CPU/内存
+                const cpuModel = result.cpu_info.cpu_desc || "CPU未知";
+                const cpuCount = result.cpu_info.cpu_count || "";
+                const memTotal = result.cpu_info.total_memory / 1024;
+                document.getElementById('info-cpu').innerText = `${cpuModel} / ${cpuCount}核 / 内存 ${memTotal.toFixed(0)} Mb`;
+
+                // 3. CAN
+                let canTx_queue_len = "";
+                let canBitrate = "";
+                if (result?.canbus && Object.keys(result.canbus).length > 0) {
+                    canName = Object.keys(result.canbus)[0];
+                    canTx_queue_len = result.canbus[canName]?.tx_queue_len;
+                    canBitrate = result.canbus[canName]?.bitrate;
+                    document.getElementById('info-can').innerText = `Bitrate: ${canBitrate} / tx_queue_len: ${canTx_queue_len}`;
+                } else {
+                    const canEl = document.getElementById('info-can');
+                    canEl.innerText = `CAN网络异常`;
+                    canEl.className = "info-value " + 'status-error';
+                }
+
+                // 4. Klipper 状态
+                const klipperState = result.service_state.klipper.active_state === 'active' ? '已启动' : '已停止';
+                const klipperEl = document.getElementById('info-klipper');
+                klipperEl.innerText = klipperState.toUpperCase();
+                klipperEl.className = "info-value " + (klipperState === '已启动' ? 'status-ok' : 'status-error');
+
+            } catch (e) {
+                console.error("Sys Info Error:", e);
+                document.getElementById('info-cpu').innerText = "获取失败";
+            }
+        }
+
+        // --- WebSocket 连接 ---
+        function connectWs() {
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => {
+                log("已连接到 Moonraker WebSocket");
+            };
+            
+            ws.onmessage = (event) => {
+                const payload = JSON.parse(event.data);
+                // 进度监听
+                if (payload.method === "lazyfirmware:progress") {
+                    const msg = payload.params[0].message;
+                    log(`[进度] ${msg}`);
+                }
+                // 监听状态变化自动刷新系统信息（可选）
+                if (payload.method === "notify_status_update") {
+                    // 如果有需要可以刷新
+                }
+            };
+            
+            ws.onclose = () => { setTimeout(connectWs, 3000); };
+        }
+
+        // --- 核心功能 (原样保留) ---
+        
+        async function fetchConfig() {
+            try {
+                const res = await fetch(`${HTTP_URL}/machine/lazyfirmware/config`);
+                const data = await res.json();
+                renderConfig(data.result || data);
+            } catch (e) {
+                log("获取配置失败: " + e);
+            }
+        }
+
+        function renderConfig(config) {
+            currentConfig = config;
+            const container = document.getElementById('config-container');
+            container.innerHTML = '';
+
+            for (const [section, params] of Object.entries(config)) {
+                if(section === 'global') continue;
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `<h3>主板: ${section}</h3>`;
+
+                ['ID', 'CONFIG', 'MODE', 'KATAPULT_SERIAL'].forEach(key => {
+                    const val = params[key] || '';
+                    div.innerHTML += `
+                        <label>${key}</label>
+                        <input type="text" value="${val}" 
+                               onchange="updateLocalConfig('${section}', '${key}', this.value)">
+                    `;
+                });
+                
+                div.innerHTML += `
+                    <div style="text-align:right; margin-top:10px;">
+                        <button class="btn-blue" onclick="runUpdate('${section}')">更新此主板</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function updateLocalConfig(section, key, val) {
+            if(!currentConfig[section]) currentConfig[section] = {};
+            currentConfig[section][key] = val;
+        }
+
+        async function saveConfig() {
+            try {
+                await fetch(`${HTTP_URL}/machine/lazyfirmware/config`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(currentConfig)
+                });
+                log("配置已保存");
+            } catch(e) { log("保存失败: " + e); }
+        }
+
+        async function runUpdate(section = null) {
+            const target = section ? section : "所有设备";
+            if(!confirm(`确定要更新 [${target}] 的固件吗？\nKlipper 将会停止运行！`)) return;
+            
+            log(`正在请求更新: ${target}...`);
+            try {
+                const res = await fetch(`${HTTP_URL}/machine/lazyfirmware/update`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ section: section })
+                });
+                const txt = await res.text();
+                log("服务器响应: " + txt);
+            } catch(e) { log("请求失败: " + e); }
+        }
+
+        async function controlService(action) {
+            log(`发送命令: ${action} klipper...`);
+            try {
+                await fetch(`${HTTP_URL}/machine/services/${action}?service=klipper`, { method: 'POST' });
+                // 延迟一下再刷新状态
+                setTimeout(fetchSystemInfo, 2000);
+            } catch(e) { log("服务控制失败: " + e); }
+        }
+
+        function log(msg) {
+            const win = document.getElementById('log-window');
+            const time = new Date().toLocaleTimeString();
+            win.innerHTML += `<div>[${time}] ${msg}</div>`;
+            win.scrollTop = win.scrollHeight;
+        }
+
+        // 初始化
+        connectWs();
+        fetchConfig();
+        fetchSystemInfo(); // 初始化时获取一次系统信息
+        
+        // 每一分钟刷新一次系统状态
+        setInterval(fetchSystemInfo, 60000);
+    </script>
+</body>
+</html>
