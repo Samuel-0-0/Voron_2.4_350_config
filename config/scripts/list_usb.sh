@@ -93,12 +93,12 @@ print_tree() {
         elif (( score >= 80 )); then color=$YELLOW; status="○ RISK"; 
         else color=$RED; status="▲ CRITICAL"; fi
 
-        printf "${prefix}${connector}${BOLD}${color}������ Klipper Device${NC} [${product}]\n"
+        printf "${prefix}${connector}${BOLD}${color}▶ Klipper Device${NC} [${product}]\n"
         printf "${prefix}$([[ "$is_last" == "true" ]] && echo "    " || echo "│   ")  ${GRAY}ID:${NC} %-12s ${GRAY}SN:${NC} %-12s\n" "$node" "${NODE_SERIAL[$node]}"
         printf "${prefix}$([[ "$is_last" == "true" ]] && echo "    " || echo "│   ")  ${GRAY}LK:${NC} %-12s ${color}${status} (${score} pts)${NC}\n" "${NODE_LINKTYPE[$node]}"
 
     elif [[ "$type" == "hub" ]]; then
-        printf "${prefix}${connector}${BLUE}������ Hub${NC} (${node})\n"
+        printf "${prefix}${connector}${BLUE}▶ Hub${NC} (${node})\n"
     fi
 
     local child_prefix="$prefix"
@@ -125,7 +125,7 @@ echo -e " ${GRAY}Scan Time: $(date '+%Y-%m-%d %H:%M:%S')${NC}\n"
 for bus in 1 2; do
     root="$bus-0"
     [[ -n "${CHILDREN[$root]}" ]] || continue
-    echo -e " ${BOLD}${MAGENTA}������ BUS $bus${NC}"
+    echo -e " ${BOLD}${MAGENTA}▶ BUS $bus${NC}"
     print_tree "$root" "" "true" 0
     echo
 done
@@ -143,22 +143,22 @@ for node in "${!NODE_SCORE[@]}"; do
     
     [[ "$score" -lt 80 ]] && level="${RED}${BOLD}HIGH RISK${NC}" || level="${YELLOW}MEDIUM RISK${NC}"
     
-    echo -e "������ ${BOLD}故障风险节点:${NC} ${CYAN}${node}${NC} [${NODE_SERIAL[$node]}]"
+    echo -e "※ ${BOLD}故障风险节点:${NC} ${CYAN}${node}${NC} [${NODE_SERIAL[$node]}]"
     echo -e "   ├─ 风险等级: $level"
     echo -e "   ├─ 链路属性: ${NODE_LINKTYPE[$node]}"
     echo -e "   └─ 诊断详情: "
 
     if [[ "${NODE_LINKTYPE[$node]}" == CAN* && ${NODE_DEPTH[$node]} -ge 2 ]]; then
-        echo -e "      ${RED}������ [链路架构错误] CAN-USB工作在级联Hub之下，极易产生高延迟导致掉线。${NC}"
-        echo -e "      ${GREEN}������ [改进方案] 将CAN直连上位机，避开所有Hub。${NC}"
+        echo -e "      ${RED}※ [链路架构错误] CAN-USB工作在级联Hub之下，极易产生高延迟导致掉线。${NC}"
+        echo -e "      ${GREEN}※ [改进方案] 将CAN直连上位机，避开所有Hub。${NC}"
     elif (( ${NODE_DEPTH[$node]} >= 3 )); then
-        echo -e "      ${ORANGE}������ [拓扑过深] USB物理链路超过3层级联，掉线风险增加。${NC}"
-        echo -e "      ${GREEN}������ [改进方案] 精简串联路径。${NC}"
+        echo -e "      ${ORANGE}※ [拓扑过深] USB物理链路超过3层级联，掉线风险增加。${NC}"
+        echo -e "      ${GREEN}※ [改进方案] 精简串联路径。${NC}"
     fi
     echo ""
 done
 
 if [[ $found -eq 0 ]]; then
-    echo -e "   ${GREEN}������ 诊断完成: 当前拓扑非常完美，未发现已知风险项。${NC}"
+    echo -e "   ${GREEN}※ 诊断完成: 当前拓扑非常完美，未发现已知风险项。${NC}"
 fi
 echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
