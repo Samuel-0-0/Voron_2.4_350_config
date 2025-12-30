@@ -97,7 +97,7 @@ fi
 ############################
 clear
 echo -e "${BOLD}${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
-echo -e "${BOLD}${CYAN}┃           Klipper CPU 调度能力判定与亲和性 (Affinity) 推荐         ┃${NC}"
+echo -e "${BOLD}${CYAN}┃           Klipper CPU 调度能力判定与亲和性 (Affinity) 推荐          ┃${NC}"
 echo -e "${BOLD}${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 echo -e " ${BOLD}处理器型号:${NC} ${YELLOW}$cpu_model${NC}"
 echo -e " ${GRAY}检测策略: $STRATEGY | 核心总数: $cpu_count${NC}\n"
@@ -132,7 +132,7 @@ bg_list=$(printf "%s " "${BG_CPUS[@]}")
 
 
 echo -e "\n${BOLD}${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
-echo -e "${BOLD}${CYAN}┃                 Systemd 优化建议配置 (修改后重启)                 ┃${NC}"
+echo -e "${BOLD}${CYAN}┃                  Systemd 优化建议配置 (修改后重启)                  ┃${NC}"
 echo -e "${BOLD}${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 
 echo -e " ${BOLD}[klipper.service]${NC}"
