@@ -38,8 +38,6 @@ declare -A CPU_DETAILS
 ############################
 # 0. 识别 CPU 型号
 ############################
-# 优先获取 Model name (x86), 如果没有则获取 Hardware (ARM/旧款), 
-# 再没有则尝试从设备树获取 (树莓派/新架构)
 cpu_model=$(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^[ \t]*//')
 if [[ -z "$cpu_model" ]]; then
     cpu_model=$(grep -m1 "Hardware" /proc/cpuinfo | cut -d: -f2 | sed 's/^[ \t]*//')
@@ -55,21 +53,14 @@ fi
 for cpu_dir in /sys/devices/system/cpu/cpu[0-9]*; do
     id=${cpu_dir##*cpu}
     ALL_CPUS+=("$id")
-    
-    # 获取容量 (大小核判断)
     cap=0
     [[ -f "$cpu_dir/cpu_capacity" ]] && cap=$(cat "$cpu_dir/cpu_capacity")
-    
-    # 获取物理核心 ID (超线程判断)
     core_id=0
     [[ -f "$cpu_dir/topology/core_id" ]] && core_id=$(cat "$cpu_dir/topology/core_id")
-    
     CPU_DETAILS[$id]="$cap|$core_id"
 done
 
 cpu_count=${#ALL_CPUS[@]}
-
-# 分类策略
 max_cap=0
 for id in "${ALL_CPUS[@]}"; do
     IFS='|' read -r cap core <<< "${CPU_DETAILS[$id]}"
@@ -77,14 +68,12 @@ for id in "${ALL_CPUS[@]}"; do
 done
 
 if [ "$max_cap" -gt 0 ]; then
-    # HMP 架构 (大核为 RT，小核为 BG)
     for id in "${ALL_CPUS[@]}"; do
         IFS='|' read -r cap core <<< "${CPU_DETAILS[$id]}"
         [[ "$cap" -eq "$max_cap" ]] && RT_CPUS+=("$id") || BG_CPUS+=("$id")
     done
     STRATEGY="HMP (大小核感知)"
 else
-    # SMP 架构 (对半分)
     STRATEGY="SMP (对称负载对半分)"
     half=$((cpu_count / 2))
     for ((i=0; i<cpu_count; i++)); do
@@ -102,26 +91,44 @@ echo -e "${BOLD}${CYAN}┗━━━━━━━━━━━━━━━━━━
 echo -e " ${BOLD}处理器型号:${NC} ${YELLOW}$cpu_model${NC}"
 echo -e " ${GRAY}检测策略: $STRATEGY | 核心总数: $cpu_count${NC}\n"
 
-# 打印核心视图
 echo -ne " ${BOLD}CPU Core Map:${NC} "
 for id in "${ALL_CPUS[@]}"; do
     is_rt=false
     for r in "${RT_CPUS[@]}"; do [[ "$r" == "$id" ]] && is_rt=true; done
-    if $is_rt; then
-        echo -ne "${GREEN}■${NC} "
-    else
-        echo -ne "${BLUE}■${NC} "
-    fi
+    if $is_rt; then echo -ne "${GREEN}■${NC} "; else echo -ne "${BLUE}■${NC} "; fi
 done
 echo -e "\n ${GRAY}( ${GREEN}■${GRAY} 实时/大核 | ${BLUE}■${GRAY} 后台/小核 )${NC}\n"
 
 ############################
-# 3. 结果明细
+# 3. 现存配置
 ############################
-printf " ${BOLD}${YELLOW}������ 实时性能组 (RT-Pool):${NC} %s\n" "${RT_CPUS[*]}"
-printf " ${GRAY}   用途: Klipper MCU 进程, CAN/USB 中断处理, 运动控制${NC}\n"
-printf " ${BOLD}${CYAN}������ 后台任务组 (BG-Pool):${NC} %s\n" "${BG_CPUS[*]}"
-printf " ${GRAY}   用途: Moonraker, Mainsail/Fluidd, Webcam 流媒体${NC}\n"
+check_service_config() {
+    local svc_file="/etc/systemd/system/$1"
+    echo -e " ${BOLD}服务文件:${NC} ${CYAN}$1${NC}"
+    if [[ -f "$svc_file" ]]; then
+        # 检查 CPUAffinity
+        local cur_aff=$(grep "^CPUAffinity=" "$svc_file" | cut -d= -f2)
+        if [[ -n "$cur_aff" ]]; then
+            echo -e "   ├─ CPUAffinity: ${GREEN}已设置 ($cur_aff)${NC}"
+        else
+            echo -e "   ├─ CPUAffinity: ${ORANGE}未设置 (建议添加)${NC}"
+        fi
+
+        # 检查 Nice 优先级
+        local cur_nice=$(grep "^Nice=" "$svc_file" | cut -d= -f2)
+        if [[ -n "$cur_nice" ]]; then
+            echo -e "   └─ Nice 优先级: ${GREEN}已设置 ($cur_nice)${NC}"
+        else
+            echo -e "   └─ Nice 优先级: ${ORANGE}未设置 (建议 Klipper 设置为 -20)${NC}"
+        fi
+    else
+        echo -e "   ${RED}⚠ 未找到服务文件，请确认安装路径${NC}"
+    fi
+}
+
+echo -e "${BOLD}${YELLOW}������ 当前系统配置:${NC}"
+check_service_config "klipper.service"
+echo ""
 
 ############################
 # 4. Systemd 推荐配置
@@ -131,18 +138,23 @@ bg_list=$(printf "%s " "${BG_CPUS[@]}")
 
 
 
-echo -e "\n${BOLD}${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${BOLD}${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
 echo -e "${BOLD}${CYAN}┃                  Systemd 优化建议配置 (修改后重启)                  ┃${NC}"
 echo -e "${BOLD}${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 
 echo -e " ${BOLD}[klipper.service]${NC}"
 echo -e " ${GREEN}CPUAffinity=$rt_list${NC}"
-echo -e " ${GRAY}# 在 [Service] 部分添加，确保运动控制不被 Webcam 抢占${NC}\n"
+echo -e " ${GREEN}Nice=-20${NC}"
+echo -e " ${GRAY}# 设置 Nice=-20 可确保 Klipper 获得最高 CPU 抢占权限${NC}\n"
 
 echo -e " ${BOLD}[moonraker.service / crowsnest.service]${NC}"
 echo -e " ${BLUE}CPUAffinity=$bg_list${NC}"
-echo -e " ${GRAY}# 限制非实时任务在低优先级核心运行${NC}"
+echo -e " ${BLUE}Nice=10${NC}"
+echo -e " ${GRAY}# 将非实时任务优先级调低，避免干扰运动控制${NC}"
 
 echo -e "\n${BOLD}${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}生效方式:${NC} 修改 Service 后执行 ${BOLD}sudo systemctl daemon-reload${NC} 并重启服务。"
+echo -e "${BOLD}生效方式:${NC}"
+echo -e " 1. 使用 ${CYAN}sudo nano /etc/systemd/system/klipper.service${NC} 编辑"
+echo -e " 2. 在 ${BOLD}[Service]${NC} 字段下添加上述参数"
+echo -e " 3. 执行 ${BOLD}sudo systemctl daemon-reload && sudo systemctl restart klipper${NC}"
 echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
