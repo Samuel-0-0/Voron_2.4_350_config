@@ -117,16 +117,16 @@ check_service_config() {
         # 检查 Nice 优先级
         local cur_nice=$(grep "^Nice=" "$svc_file" | cut -d= -f2)
         if [[ -n "$cur_nice" ]]; then
-            echo -e "   └─ Nice 优先级: ${GREEN}已设置 ($cur_nice)${NC}"
+            echo -e "   └─ Nice优先级: ${GREEN}已设置 ($cur_nice)${NC}"
         else
-            echo -e "   └─ Nice 优先级: ${ORANGE}未设置 (建议 Klipper 设置为 -20)${NC}"
+            echo -e "   └─ Nice优先级: ${ORANGE}未设置 (建议Klipper设置为 -20)${NC}"
         fi
     else
         echo -e "   ${RED}⚠ 未找到服务文件，请确认安装路径${NC}"
     fi
 }
 
-echo -e "${BOLD}${YELLOW}������ 当前系统配置:${NC}"
+echo -e "${BOLD}${YELLOW}▶ 当前系统配置:${NC}"
 check_service_config "klipper.service"
 echo ""
 
@@ -139,15 +139,17 @@ bg_list=$(printf "%s " "${BG_CPUS[@]}")
 
 
 echo -e "${BOLD}${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
-echo -e "${BOLD}${CYAN}┃                  Systemd 优化建议配置 (修改后重启)                  ┃${NC}"
+echo -e "${BOLD}${CYAN}┃                         Systemd 优化建议配置                        ┃${NC}"
 echo -e "${BOLD}${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 
-echo -e " ${BOLD}[klipper.service]${NC}"
+echo -e " ${BOLD}▶ klipper.service 文件：${NC}"
+echo -e " ${BOLD}[Service]${NC}"
 echo -e " ${GREEN}CPUAffinity=$rt_list${NC}"
 echo -e " ${GREEN}Nice=-20${NC}"
-echo -e " ${GRAY}# 设置 Nice=-20 可确保 Klipper 获得最高 CPU 抢占权限${NC}\n"
+echo -e " ${GRAY}# 设置 Nice=-20 可确保Klipper获得最高CPU抢占权限${NC}\n"
 
-echo -e " ${BOLD}[moonraker.service / crowsnest.service]${NC}"
+echo -e " ${BOLD}▶ moonraker.service / crowsnest.service 文件：${NC}"
+echo -e " ${BOLD}[Service]${NC}"
 echo -e " ${BLUE}CPUAffinity=$bg_list${NC}"
 echo -e " ${BLUE}Nice=10${NC}"
 echo -e " ${GRAY}# 将非实时任务优先级调低，避免干扰运动控制${NC}"
