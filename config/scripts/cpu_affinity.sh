@@ -36,6 +36,20 @@ declare -a BG_CPUS
 declare -A CPU_DETAILS
 
 ############################
+# 0. 识别 CPU 型号
+############################
+# 优先获取 Model name (x86), 如果没有则获取 Hardware (ARM/旧款), 
+# 再没有则尝试从设备树获取 (树莓派/新架构)
+cpu_model=$(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^[ \t]*//')
+if [[ -z "$cpu_model" ]]; then
+    cpu_model=$(grep -m1 "Hardware" /proc/cpuinfo | cut -d: -f2 | sed 's/^[ \t]*//')
+fi
+if [[ -z "$cpu_model" && -f /proc/device-tree/model ]]; then
+    cpu_model=$(cat /proc/device-tree/model | tr -d '\0')
+fi
+[[ -z "$cpu_model" ]] && cpu_model="Generic Processor"
+
+############################
 # 1. 核心检测逻辑
 ############################
 for cpu_dir in /sys/devices/system/cpu/cpu[0-9]*; do
@@ -83,8 +97,9 @@ fi
 ############################
 clear
 echo -e "${BOLD}${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
-echo -e "${BOLD}${CYAN}┃           Klipper CPU 调度能力判定与亲和性 (Affinity) 推荐          ┃${NC}"
+echo -e "${BOLD}${CYAN}┃           Klipper CPU 调度能力判定与亲和性 (Affinity) 推荐         ┃${NC}"
 echo -e "${BOLD}${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo -e " ${BOLD}处理器型号:${NC} ${YELLOW}$cpu_model${NC}"
 echo -e " ${GRAY}检测策略: $STRATEGY | 核心总数: $cpu_count${NC}\n"
 
 # 打印核心视图
@@ -117,7 +132,7 @@ bg_list=$(printf "%s " "${BG_CPUS[@]}")
 
 
 echo -e "\n${BOLD}${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
-echo -e "${BOLD}${CYAN}┃                  Systemd 优化建议配置 (修改后重启)                  ┃${NC}"
+echo -e "${BOLD}${CYAN}┃                 Systemd 优化建议配置 (修改后重启)                 ┃${NC}"
 echo -e "${BOLD}${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 
 echo -e " ${BOLD}[klipper.service]${NC}"
