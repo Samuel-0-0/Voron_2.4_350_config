@@ -216,6 +216,8 @@ RemainAfterExit=yes
 EnvironmentFile=${KLIPPER_ENV_FILE}
 ExecStart= ${KLIPPY_ENV_DIR}/bin/python \$KLIPPER_ARGS
 Restart=always
+# 有大小核的CPU手动指定运行在哪个内核上
+#CPUAffinity=6 7
 RestartSec=10
 Nice=-20
 EOF

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh_cn">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klipper Stallguard 数据查看器</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
     <style>
@@ -228,7 +228,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔧 Klipper Stallguard 数据查看器</h1>
+        <h1>Klipper Stallguard 数据查看器</h1>
         
         <div class="connection-info">
             <div class="form-group">
@@ -251,21 +251,21 @@
         </div>
         
         <div id="chartSection" style="display: none;">
-            <h3>📈 Stallguard 数据</h3>
+            <h3>Stallguard 数据</h3>
             <div class="chart-controls">
                 <button class="btn btn-small" id="pauseBtn">⏸️ 暂停</button>
                 <button class="btn btn-small" id="resumeBtn" disabled>▶️ 恢复</button>
-                <button class="btn btn-small" id="resetZoomBtn">🔍 重置放大</button>
-                <button class="btn btn-small" id="clearDataBtn">🗑️ 清除数据</button>
+                <button class="btn btn-small" id="resetZoomBtn">重置放大</button>
+                <button class="btn btn-small" id="clearDataBtn">清除数据</button>
                 <label>
                     <input type="checkbox" id="autoscaleBtn" checked> 自动缩放
                 </label>
             </div>
             <div class="data-info">
-                <span>📊 数据点：<strong id="dataCount">0</strong></span>
+                <span>数据点：<strong id="dataCount">0</strong></span>
                 <span>⏱️ 缓存时间：<strong id="bufferTime">0s</strong></span>
-                <span>📈 SG 范围：<strong id="sgRange">-</strong></span>
-                <span>🔋 CS 范围：<strong id="csRange">-</strong></span>
+                <span>SG 范围：<strong id="sgRange">-</strong></span>
+                <span>CS 范围：<strong id="csRange">-</strong></span>
             </div>
             <div class="chart-container">
                 <canvas id="stallguardChart"></canvas>
@@ -273,7 +273,7 @@
         </div>
         
         <div id="dataOutput" style="display: none;">
-            <h3>📜 调试日志：</h3>
+            <h3>调试日志：</h3>
             <div id="logContainer" class="log-container"></div>
         </div>
     </div>
