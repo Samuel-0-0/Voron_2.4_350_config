@@ -2,35 +2,43 @@ import subprocess
 import sys
 import os
 
-# --- 依赖项自动审计模块 ---
+# --- 依赖项自动审计与静默安装模块 ---
 required_packages = {
     "fastapi": "fastapi",
     "uvicorn": "uvicorn",
     "psutil": "psutil"
 }
 
-missing_packages = []
-for import_name, install_name in required_packages.items():
-    try:
-        __import__(import_name)
-    except ImportError:
-        missing_packages.append(install_name)
+def check_and_install_dependencies():
+    print("正在扫描系统环境...")
+    for import_name, install_name in required_packages.items():
+        try:
+            __import__(import_name)
+        except ImportError:
+            print(f"发现缺失核心插件: {install_name}，准备自动部署...")
+            try:
+                # 使用 sys.executable 确保安装到当前运行环境
+                subprocess.check_call([sys.executable, "-m", "pip", "install", install_name])
+                print(f"{install_name} 部署成功。")
+            except subprocess.CalledProcessError as e:
+                print("\n" + "!"*50)
+                print(f"严重错误: 插件 [{install_name}] 安装失败！")
+                print(f"原因: 进程返回非零退出代码 {e.returncode}")
+                print("-" * 50)
+                print("请尝试手动执行以下操作:")
+                print(f"  pip install {install_name}")
+                print("!"*50 + "\n")
+                sys.exit(1)
+            except Exception as e:
+                print(f"发生未知异常: {str(e)}")
+                sys.exit(1)
 
-if missing_packages:
-    print("\n" + "="*50)
-    print("❌ 错误: 运行环境缺少必要的 Python 包！")
-    print(f"缺失项目: {', '.join(missing_packages)}")
-    print("-"*50)
-    print("请执行以下命令安装依赖:")
-    print(f"\n    pip install {' '.join(missing_packages)}\n")
-    print("="*50 + "\n")
-    sys.exit(1) # 终止运行
-# -----------------------
+# 执行审计逻辑
+check_and_install_dependencies()
+# -----------------------------------
 
 import asyncio
-import subprocess
 import json
-import os
 import re
 import glob
 import psutil
@@ -42,10 +50,16 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"])
 
 class DiagnosticTool:
     @staticmethod
-    def run_cmd(cmd):
+    def run_cmd(cmd, sudo_pwd=None):
         try:
+            if sudo_pwd:
+                full_cmd = f"echo '{sudo_pwd}' | sudo -S {cmd}"
+                return subprocess.check_output(full_cmd, shell=True, stderr=subprocess.STDOUT).decode().strip()
             return subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL).decode().strip()
-        except: return ""
+        except subprocess.CalledProcessError as e:
+            return f"失败: {e.output.decode().strip() if e.output else str(e)}"
+        except Exception as e:
+            return f"异常: {str(e)}"
 
     @staticmethod
     def read_sys_file(path):
@@ -141,6 +155,16 @@ class DiagnosticTool:
             except: continue
         return {"nodes": nodes}
 
+    @staticmethod
+    def get_can_status():
+        is_modern = DiagnosticTool.run_cmd("systemctl is-active networkd-dispatcher.service").strip() == "active"
+        if_info = DiagnosticTool.run_cmd("ip -br link show | grep can || echo '无激活接口'")
+        return {
+            "mode": "Modern (systemd)" if is_modern else "Legacy (ifupdown)",
+            "interfaces": if_info,
+            "kernel_can": "已加载" if "can" in DiagnosticTool.run_cmd("lsmod | grep can") else "未加载"
+        }
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -149,9 +173,40 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             req = json.loads(data)
             action = req.get("action")
+            params = req.get("params", {})
             if action == "cpu": await websocket.send_json({"type": "cpu", "data": DiagnosticTool.get_detailed_cpu()})
             elif action == "emmc": await websocket.send_json({"type": "emmc", "data": DiagnosticTool.get_emmc_health()})
             elif action == "usb": await websocket.send_json({"type": "usb", "data": DiagnosticTool.get_usb_analysis()})
+            elif action == "can_status": await websocket.send_json({"type": "can_status", "data": DiagnosticTool.get_can_status()})
+            elif action == "can_apply":
+                pwd = params.get("pwd")
+                ifname, br, tx = params.get("ifname"), params.get("bitrate"), params.get("txlen")
+                is_modern = DiagnosticTool.run_cmd("systemctl is-active networkd-dispatcher.service").strip() == "active"
+                logs = []
+                
+                # 1. 写入配置
+                if is_modern:
+                    net_cfg = f"[Match]\\nName={ifname}\\n\\n[CAN]\\nBitRate={br}\\n\\n[Link]\\nRequiredForOnline=no"
+                    udev_cfg = f"SUBSYSTEM==\\\"net\\\", ACTION==\\\"change|add\\\", KERNEL==\\\"{ifname}\\\" ATTR{{tx_queue_len}}=\\\"{tx}\\\""
+                    r1 = DiagnosticTool.run_cmd(f"echo -e '{net_cfg}' | tee /etc/systemd/network/25-can.network", pwd)
+                    r2 = DiagnosticTool.run_cmd(f"echo -e '{udev_cfg}' | tee /etc/udev/rules.d/10-can.rules", pwd)
+                    logs.append(f"Network配置: {r1}\nUdev配置: {r2}")
+                else:
+                    int_cfg = f"allow-hotplug {ifname}\\niface {ifname} can static\\n    bitrate {br}\\n    up ip link set {ifname} txqueuelen {tx}"
+                    r = DiagnosticTool.run_cmd(f"echo -e '{int_cfg}' | tee /etc/network/interfaces.d/{ifname}", pwd)
+                    logs.append(f"Interfaces配置:\n{r}")
+                
+                # 2. 检查是否有错误发生
+                success = all("ERROR" not in log and "EXCEPTION" not in log for log in logs)
+                final_status = "✅ 所有配置已成功写入系统文件。" if success else "❌ 配置过程中出现错误，请检查权限或密码。"
+                logs.append(final_status)
+                
+                await websocket.send_json({"type": "can_log", "data": "\n".join(logs)})
+            elif action == "can_restart":
+                pwd = params.get("pwd")
+                r1 = DiagnosticTool.run_cmd("systemctl restart systemd-networkd", pwd)
+                r2 = DiagnosticTool.run_cmd("systemctl restart networking", pwd)
+                await websocket.send_json({"type": "can_log", "data": f"重启指令执行结果:\n{r1}\n{r2}"})
         except: break
 
 if __name__ == "__main__":

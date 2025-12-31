@@ -13,7 +13,7 @@
         .sidebar { display: flex; flex-direction: column; gap: 18px; border-right: 1px solid rgba(0, 243, 255, 0.1); padding-right: 20px; }
         .main-view { display: flex; flex-direction: column; gap: 20px; }
         
-        .panel { background: var(--panel-bg); border: 1px solid rgba(0, 243, 255, 0.2); padding: 20px; }
+        .panel { display: none; background: var(--panel-bg); border: 1px solid rgba(0, 243, 255, 0.2); padding: 20px; }
         .panel-title { font-family: 'Orbitron', sans-serif; font-size: 17px; margin-bottom: 15px; border-left: 5px solid var(--neon); padding-left: 12px; display: flex; justify-content: space-between; }
         
         /* CPU 核心视图 */
@@ -46,7 +46,11 @@
 
         .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 12px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 14px; transition: 0.3s; }
         .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
-        input { background: #000; border: 1px solid var(--neon); color: var(--neon); padding: 12px; outline: none; font-family: inherit; }
+        input, select { background: #000; border: 1px solid var(--neon); color: var(--neon); padding: 12px; outline: none; font-family: inherit; }
+
+        .log-terminal { background: #000; color: #00ff41; padding: 10px; height: 150px; overflow-y: auto; font-size: 11px; border: 1px solid #222; margin-top: 15px; white-space: pre-wrap; }
+        .error-hint { color: var(--danger); font-size: 11px; margin-top: -5px; margin-bottom: 10px; font-weight: bold; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -60,13 +64,15 @@
     <div class="sidebar">
         <input type="text" id="ip" value="192.168.88.20">
         <button class="btn" onclick="connect()">建立隧道连接</button>
-        <button class="btn" onclick="send('cpu')">CPU 核心检查</button>
-        <button class="btn" onclick="send('usb')">USB 拓扑检查</button>
-        <button class="btn" onclick="send('emmc')">eMMC 寿命检查</button>
+        <div id="side-err" class="error-hint"></div>
+        <button class="btn" onclick="openPanel('cpu')">CPU 核心检查</button>
+        <button class="btn" onclick="openPanel('usb')">USB 拓扑检查</button>
+        <button class="btn" onclick="openPanel('emmc')">eMMC 寿命检查</button>
+        <button class="btn" onclick="openPanel('can')">CANBus 配置</button>
     </div>
 
     <div class="main-view">
-        <div class="panel">
+        <div class="panel" id="panel-cpu">
             <div class="panel-title"><span>CPU 异构核心分配视图</span><span id="cpu-strat" style="font-size: 12px; opacity: 0.5;">--</span></div>
             <div id="cpu-grid" class="cpu-grid"></div>
             <div id="cpu-model" style="font-size: 18px; color:#fff; margin: 15px 0 10px 0;">等待核心数据...</div>
@@ -87,16 +93,46 @@
             </div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="panel-usb">
             <div class="panel-title"><span>USB 通讯链拓扑</span></div>
             <div id="usb-tree">等待指令...</div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="panel-emmc">
             <div class="panel-title"><span>eMMC 存储健康状态</span></div>
             <div style="display:flex; justify-content:space-between; font-size:14px;"><span>芯片预估寿命</span><span id="emmc-pct">--</span></div>
             <div class="emmc-bar-container"><div id="emmc-fill" class="emmc-bar-fill"></div></div>
             <div id="emmc-msg" style="margin-top:10px; font-size:12px; color:#666;">--</div>
+        </div>
+        <div class="panel" id="panel-can">
+            <div class="panel-title">CANBus 自动化环境配置</div>
+            <div id="can-status-box" style="font-size:12px; margin-bottom:15px; border:1px dashed var(--neon); padding:10px;"></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div>
+                    <label style="font-size:11px;">ROOT 密码 (Sudo):</label>
+                    <input type="password" id="can-pwd" placeholder="写入配置必需">
+                    <div id="pwd-err" class="error-hint"></div>
+                </div>
+                <div>
+                    <label style="font-size:11px;">CAN 接口名称:</label>
+                    <input type="text" id="can-ifname" value="can0">
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div>
+                    <label style="font-size:11px;">Bitrate (bps):</label>
+                    <select id="can-br"><option value="1000000">1000000 (1M)</option><option value="500000">500000 (500K)</option></select>
+                </div>
+                <div>
+                    <label style="font-size:11px;">txqueuelen:</label>
+                    <select id="can-tx"><option value="1024">1024 (无脑使用)</option><option value="512">512 (减少TTC)</option><option value="256">256 (社区推荐)</option><option value="128">128 (Klipper建议值)</option></select>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <button class="btn" onclick="applyCan()">[ 保存配置 ]</button>
+                <button class="btn" style="border-color:var(--warn); color:var(--warn);" onclick="restartCan()">[ 重启网络 ]</button>
+            </div>
+            <div class="log-terminal" id="can-terminal">终端就绪</div>
         </div>
     </div>
 </div>
@@ -110,7 +146,28 @@
         ws.onopen = () => { document.getElementById('status').innerText = "LINK: ONLINE"; document.getElementById('status').style.color = "var(--success)"; };
         ws.onmessage = (e) => handleData(JSON.parse(e.data));
     }
-    function send(action) { if(ws && ws.readyState === 1) ws.send(JSON.stringify({action})); }
+    function openPanel(name) {
+        if(!ws || ws.readyState !== 1) { sideErr.innerText = "请先连接隧道"; return; }
+        document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+        document.getElementById('panel-' + name).style.display = 'block';
+        if(name === 'can') ws.send(JSON.stringify({action: 'can_status'}));
+        else ws.send(JSON.stringify({action: name}));
+    }
+    function applyCan() {
+        const pwd = document.getElementById('can-pwd').value;
+        if(!pwd) { document.getElementById('pwd-err').innerText = "需要 Root 授权"; return; }
+        document.getElementById('pwd-err').innerText = "";
+        ws.send(JSON.stringify({action: 'can_apply', params: {
+            pwd, ifname: document.getElementById('can-ifname').value, 
+            bitrate: document.getElementById('can-br').value, txlen: document.getElementById('can-tx').value
+        }}));
+    }
+
+    function restartCan() {
+        const pwd = document.getElementById('can-pwd').value;
+        if(!pwd) { document.getElementById('pwd-err').innerText = "需要 Root 授权"; return; }
+        ws.send(JSON.stringify({action: 'can_restart', params: { pwd }}));
+    }
 
     function handleData(res) {
         if(res.type === 'cpu') {
@@ -155,6 +212,14 @@
                     </div>`).join('');
             };
             document.getElementById('usb-tree').innerHTML = buildTree(res.data.nodes, "1-0");
+        }
+        if(res.type === 'can_status') {
+            document.getElementById('can-status-box').innerHTML = `管理模式: ${res.data.mode} | 内核模块: ${res.data.kernel_can}<br>接口状态: ${res.data.interfaces}`;
+        }
+        if(res.type === 'can_log') {
+            const term = document.getElementById('can-terminal');
+            term.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${res.data}`;
+            term.scrollTop = term.scrollHeight;
         }
     }
 </script>
