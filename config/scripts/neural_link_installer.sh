@@ -56,5 +56,4 @@ nohup python3 "$PRINTER_SCRIPTS/$PY_NAME" > /tmp/neural_link.log 2>&1 &
 echo "===================================================="
 echo "▶ 部署成功！"
 echo "▶ 请访问: http://$HOST_IP/$HTML_NAME"
-echo "▶ 如果网页图标仍是方框，请刷新浏览器缓存 (Ctrl+F5)"
 echo "===================================================="
