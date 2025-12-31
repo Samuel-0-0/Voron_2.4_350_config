@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>NEURAL LINK</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon: #00f3ff; --bg: #01080e; --panel-bg: rgba(0, 20, 30, 0.7); --danger: #ff0055; --success: #00ff41; --warn: #fbb03b; }
+        body { background: var(--bg); color: var(--neon); font-family: 'JetBrains Mono', 'Microsoft YaHei', monospace; margin: 0; font-size: 16px; line-height: 1.5; }
+        header { padding: 15px 30px; border-bottom: 2px solid var(--neon); font-family: 'Orbitron', sans-serif; display: flex; justify-content: space-between; align-items: center; }
+        
+        .container { display: grid; grid-template-columns: 280px minmax(600px, 950px); gap: 25px; padding: 25px; justify-content: center; }
+        .sidebar { display: flex; flex-direction: column; gap: 18px; border-right: 1px solid rgba(0, 243, 255, 0.1); padding-right: 20px; }
+        .main-view { display: flex; flex-direction: column; gap: 20px; }
+        
+        .panel { background: var(--panel-bg); border: 1px solid rgba(0, 243, 255, 0.2); padding: 20px; }
+        .panel-title { font-family: 'Orbitron', sans-serif; font-size: 17px; margin-bottom: 15px; border-left: 5px solid var(--neon); padding-left: 12px; display: flex; justify-content: space-between; }
+        
+        /* CPU 核心视图 */
+        .cpu-grid { display: flex; gap: 8px; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 4px; border: 1px solid #111; margin-bottom: 15px; }
+        .core-slot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .bar-bg { width: 100%; height: 8px; background: #000; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 0%; transition: 0.6s; }
+        
+        .tag { padding: 4px 12px; border-radius: 2px; font-size: 13px; font-weight: bold; display: inline-block; margin-right: 10px; }
+        .tag-ok { border: 1px solid var(--success); color: var(--success); }
+        .tag-warn { border: 1px solid var(--warn); color: var(--warn); }
+
+        /* 配置建议区 */
+        .cfg-box { background: rgba(0,0,0,0.6); padding: 20px; margin-top: 15px; border-left: 3px solid var(--neon); font-size: 14px; }
+        .cfg-line { margin: 6px 0; color: #ccc; }
+        .cfg-val { color: var(--success); font-weight: bold; }
+        .cfg-com { color: #555; font-style: italic; margin-left: 10px; }
+
+        /* USB 树形 - 备注+SN+评分逻辑 */
+        .tree-node { margin: 8px 0; padding-left: 20px; border-left: 1px dashed rgba(0, 243, 255, 0.2); }
+        .node-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+        .fw-badge { font-size: 11px; padding: 1px 5px; border-radius: 2px; font-weight: bold; color: #000; }
+        .fw-KLIPPER { background: var(--success); }
+        .fw-KATAPULT { background: var(--warn); }
+        .sn-tag { font-size: 12px; color: #666; background: rgba(255,255,255,0.05); padding: 2px 6px; }
+
+        /* eMMC 进度条样式 */
+        .emmc-bar-container { height: 10px; background: #000; margin-top: 10px; border: 1px solid #333; }
+        .emmc-bar-fill { height: 100%; width: 0%; background: var(--success); transition: 1s; }
+
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 12px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 14px; transition: 0.3s; }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
+        input { background: #000; border: 1px solid var(--neon); color: var(--neon); padding: 12px; outline: none; font-family: inherit; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>NEURAL LINK <span style="font-size: 12px; opacity: 0.5;">v1.0.2 [ POWERED BY SAMUEL.WANG  (三木) ]</span></div>
+    <div id="status" style="color:var(--danger)">LINK: OFFLINE</div>
+</header>
+
+<div class="container">
+    <div class="sidebar">
+        <input type="text" id="ip" value="192.168.88.20">
+        <button class="btn" onclick="connect()">建立隧道连接</button>
+        <button class="btn" onclick="send('cpu')">CPU 核心检查</button>
+        <button class="btn" onclick="send('usb')">USB 拓扑检查</button>
+        <button class="btn" onclick="send('emmc')">eMMC 寿命检查</button>
+    </div>
+
+    <div class="main-view">
+        <div class="panel">
+            <div class="panel-title"><span>CPU 异构核心分配视图</span><span id="cpu-strat" style="font-size: 12px; opacity: 0.5;">--</span></div>
+            <div id="cpu-grid" class="cpu-grid"></div>
+            <div id="cpu-model" style="font-size: 18px; color:#fff; margin: 15px 0 10px 0;">等待核心数据...</div>
+            <div id="cpu-audit">
+                <div id="tag-aff" class="tag">亲和度: --</div>
+                <div id="tag-nice" class="tag">优先级: --</div>
+            </div>
+            <div id="cpu-guide" style="display:none;">
+                <div style="color:var(--warn); font-size: 14px; margin-top:15px; font-weight:bold;">⚡ 调度建议：Klipper 核心服务应锁定在高性能核心上</div>
+                <div class="cfg-box">
+                    <div class="cfg-line">● /etc/systemd/system/klipper.service</div>
+                    <div class="cfg-line" style="padding-left:20px;">[Service]</div>
+                    <div class="cfg-line" style="padding-left:20px;"><span class="cfg-val">CPUAffinity=<span id="cfg-aff-val"></span></span> <span class="cfg-com"># 绑定至识别的大核</span></div>
+                    <div class="cfg-line" style="padding-left:20px;"><span class="cfg-val">Nice=-20</span> <span class="cfg-com"># 抢占式优先级</span></div>
+                    <div class="cfg-line" style="margin-top:10px;">● moonraker.service / crowsnest.service</div>
+                    <div class="cfg-line" style="padding-left:20px;"><span class="cfg-val">CPUAffinity=<span id="cfg-other-val"></span></span> <span class="cfg-com"># 移至能效核，避免干扰</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title"><span>USB 通讯链拓扑</span></div>
+            <div id="usb-tree">等待指令...</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title"><span>eMMC 存储健康状态</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:14px;"><span>芯片预估寿命</span><span id="emmc-pct">--</span></div>
+            <div class="emmc-bar-container"><div id="emmc-fill" class="emmc-bar-fill"></div></div>
+            <div id="emmc-msg" style="margin-top:10px; font-size:12px; color:#666;">--</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let ws;
+    function connect() {
+        const ip = document.getElementById('ip').value;
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(`${protocol}//${ip}:8765/ws`);
+        ws.onopen = () => { document.getElementById('status').innerText = "LINK: ONLINE"; document.getElementById('status').style.color = "var(--success)"; };
+        ws.onmessage = (e) => handleData(JSON.parse(e.data));
+    }
+    function send(action) { if(ws && ws.readyState === 1) ws.send(JSON.stringify({action})); }
+
+    function handleData(res) {
+        if(res.type === 'cpu') {
+            const d = res.data;
+            document.getElementById('cpu-model').innerText = d.model;
+            document.getElementById('cpu-strat').innerText = `架构模式: ${d.strategy}`;
+            document.getElementById('cpu-grid').innerHTML = d.usage.map((val, i) => {
+                const isBig = d.big_cores.includes(i);
+                return `<div class="core-slot">
+                    <div style="font-size:14px; font-weight:bold; color:${isBig?'var(--neon)':'#a020f0'}">${val}%</div>
+                    <div class="bar-bg"><div class="bar-fill" style="width:${val}%; background:${isBig?'var(--neon)':'#a020f0'}"></div></div>
+                    <div style="font-size:11px; opacity:0.5;">Core ${i}</div>
+                </div>`;
+            }).join('');
+            document.getElementById('tag-aff').innerText = `亲和度: ${d.config.affinity}`;
+            document.getElementById('tag-aff').className = 'tag ' + (d.config.affinity !== '未设置' ? 'tag-ok' : 'tag-warn');
+            document.getElementById('tag-nice').innerText = `调度优先级: ${d.config.nice}`;
+            document.getElementById('tag-nice').className = 'tag ' + (d.config.nice === '-20' ? 'tag-ok' : 'tag-warn');
+            document.getElementById('cfg-aff-val').innerText = d.recommend.klipper;
+            document.getElementById('cfg-other-val').innerText = d.recommend.other;
+            document.getElementById('cpu-guide').style.display = d.config.is_optimized ? 'none' : 'block';
+        }
+
+        if(res.type === 'emmc') {
+            document.getElementById('emmc-pct').innerText = res.data.mlc + "%";
+            document.getElementById('emmc-fill').style.width = res.data.mlc + "%";
+            document.getElementById('emmc-msg').innerText = `节点: ${res.data.device} | ${res.data.msg}`;
+        }
+
+        if(res.type === 'usb') {
+            const buildTree = (nodes, pid) => {
+                return nodes.filter(n => n.pid === pid).map(n => `
+                    <div class="tree-node">
+                        <div class="node-row">
+                            <span style="border:1px solid var(--neon); font-size:10px; padding:0 4px;">${n.type}</span>
+                            <span>${n.name}</span>
+                            ${n.fw ? `<span class="fw-badge fw-${n.fw}">${n.fw}</span>` : ''}
+                            <span class="sn-tag">SN: ${n.serial}</span>
+                            <span style="margin-left:auto; color:${n.score>85?'var(--success)':'var(--danger)'}">${n.score}分</span>
+                        </div>
+                        ${buildTree(nodes, n.id)}
+                    </div>`).join('');
+            };
+            document.getElementById('usb-tree').innerHTML = buildTree(res.data.nodes, "1-0");
+        }
+    }
+</script>
+</body>
+</html>

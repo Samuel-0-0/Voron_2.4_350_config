@@ -1,0 +1,159 @@
+import subprocess
+import sys
+import os
+
+# --- 依赖项自动审计模块 ---
+required_packages = {
+    "fastapi": "fastapi",
+    "uvicorn": "uvicorn",
+    "psutil": "psutil"
+}
+
+missing_packages = []
+for import_name, install_name in required_packages.items():
+    try:
+        __import__(import_name)
+    except ImportError:
+        missing_packages.append(install_name)
+
+if missing_packages:
+    print("\n" + "="*50)
+    print("❌ 错误: 运行环境缺少必要的 Python 包！")
+    print(f"缺失项目: {', '.join(missing_packages)}")
+    print("-"*50)
+    print("请执行以下命令安装依赖:")
+    print(f"\n    pip install {' '.join(missing_packages)}\n")
+    print("="*50 + "\n")
+    sys.exit(1) # 终止运行
+# -----------------------
+
+import asyncio
+import subprocess
+import json
+import os
+import re
+import glob
+import psutil
+from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["*"])
+
+class DiagnosticTool:
+    @staticmethod
+    def run_cmd(cmd):
+        try:
+            return subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL).decode().strip()
+        except: return ""
+
+    @staticmethod
+    def read_sys_file(path):
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    return f.read().strip()
+            except: return ""
+        return ""
+
+    @staticmethod
+    def get_detailed_cpu():
+        model = DiagnosticTool.run_cmd("grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^[ \\t]*//'")
+        if not model:
+            model = DiagnosticTool.run_cmd("grep -m1 'Model' /proc/cpuinfo | cut -d: -f2 | sed 's/^[ \\t]*//'")
+        
+        core_count = psutil.cpu_count()
+        per_cpu_usage = psutil.cpu_percent(interval=0.1, percpu=True)
+        
+        # 跨架构大小核审计 (Intel/AMD/ARM)
+        core_scores = []
+        for i in range(core_count):
+            score = 0
+            try:
+                # 尝试读取频率和计算能力
+                freq = DiagnosticTool.read_sys_file(f"/sys/devices/system/cpu/cpu{i}/cpufreq/cpuinfo_max_freq")
+                score = int(freq) if freq else 1000
+                cap = DiagnosticTool.read_sys_file(f"/sys/devices/system/cpu/cpu{i}/cpu_capacity")
+                if cap: score += int(cap) * 1000
+            except: pass
+            core_scores.append(score)
+
+        max_s = max(core_scores) if core_scores else 1
+        min_s = min(core_scores) if core_scores else 1
+        is_hybrid = (max_s / min_s) > 1.1 if min_s > 0 else False
+        
+        if is_hybrid:
+            big_cores = [i for i, s in enumerate(core_scores) if s >= max_s * 0.95]
+        else:
+            big_cores = list(range(0, max(1, core_count // 2)))
+        
+        little_cores = [i for i in range(core_count) if i not in big_cores]
+
+        svc_config = {"affinity": "未设置", "nice": "未设置", "is_optimized": False}
+        klipper_svc = "/etc/systemd/system/klipper.service"
+        if os.path.exists(klipper_svc):
+            content = DiagnosticTool.read_sys_file(klipper_svc)
+            aff_m = re.search(r"^CPUAffinity=(.+)", content, re.M)
+            nice_m = re.search(r"^Nice=(.+)", content, re.M)
+            if aff_m: svc_config["affinity"] = aff_m.group(1).strip()
+            if nice_m: svc_config["nice"] = nice_m.group(1).strip()
+            if aff_m and nice_m: svc_config["is_optimized"] = True
+
+        return {
+            "model": model or "Unknown Processor",
+            "cores": core_count,
+            "usage": per_cpu_usage,
+            "big_cores": big_cores,
+            "config": svc_config,
+            "recommend": {"klipper": " ".join(map(str, big_cores)), "other": " ".join(map(str, little_cores))},
+            "strategy": "Heterogeneous (异构)" if is_hybrid else "Homogeneous (对称)"
+        }
+
+    @staticmethod
+    def get_emmc_health():
+        dev_list = DiagnosticTool.run_cmd("ls /sys/block/ | grep mmcblk[0-9]$").split()
+        dev = dev_list[0] if dev_list else "mmcblk0"
+        life_raw = DiagnosticTool.read_sys_file(f"/sys/block/{dev}/device/life_time").split()
+        mlc_hex = int(life_raw[0], 16) if life_raw else 0
+        mlc_pct = (11 - mlc_hex) * 10 if 0 < mlc_hex <= 10 else (0 if mlc_hex > 10 else 100)
+        return {"device": dev, "mlc": mlc_pct, "msg": "寿命充足" if mlc_pct > 30 else "建议更换"}
+
+    @staticmethod
+    def get_usb_analysis():
+        nodes = []
+        for dev_path in glob.glob("/sys/bus/usb/devices/[0-9]*-*"):
+            name = os.path.basename(dev_path)
+            if not re.match(r"^[0-9]+-[0-9]+(\.[0-9]+)*$", name): continue
+            try:
+                is_hub = DiagnosticTool.read_sys_file(f"{dev_path}/bDeviceClass") == "09"
+                product = DiagnosticTool.read_sys_file(f"{dev_path}/product") or ("USB Hub" if is_hub else "Unknown Device")
+                mfg = DiagnosticTool.read_sys_file(f"{dev_path}/manufacturer")
+                serial = DiagnosticTool.read_sys_file(f"{dev_path}/serial") or "N/A"
+                
+                fw = ""
+                combined = (product + mfg).lower()
+                if "klipper" in combined: fw = "KLIPPER"
+                elif any(x in combined for x in ["katapult", "canboot"]): fw = "KATAPULT"
+                
+                depth = name.count('.') + 1
+                pid = name.rsplit('.', 1)[0] if '.' in name else name.split('-')[0] + "-0"
+                nodes.append({"id": name, "pid": pid, "type": "HUB" if is_hub else "设备", "name": product, "fw": fw, "serial": serial, "score": max(0, 100-(depth-1)*10)})
+            except: continue
+        return {"nodes": nodes}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        try:
+            data = await websocket.receive_text()
+            req = json.loads(data)
+            action = req.get("action")
+            if action == "cpu": await websocket.send_json({"type": "cpu", "data": DiagnosticTool.get_detailed_cpu()})
+            elif action == "emmc": await websocket.send_json({"type": "emmc", "data": DiagnosticTool.get_emmc_health()})
+            elif action == "usb": await websocket.send_json({"type": "usb", "data": DiagnosticTool.get_usb_analysis()})
+        except: break
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8765)
