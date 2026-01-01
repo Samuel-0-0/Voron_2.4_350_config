@@ -117,22 +117,22 @@
             <div id="can-status-box" style="font-size:12px; margin-bottom:15px; border:1px dashed var(--neon); padding:10px;"></div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                 <div>
-                    <label style="font-size:11px;">ROOT 密码 (Sudo):</label>
+                    <label for="can-pwd" style="font-size:11px;">ROOT 密码 (Sudo):</label>
                     <input type="password" id="can-pwd" placeholder="写入配置必需">
                     <div id="pwd-err" class="error-hint"></div>
                 </div>
                 <div>
-                    <label style="font-size:11px;">CAN 接口名称:</label>
+                    <label for="can-ifname" style="font-size:11px;">CAN 接口名称:</label>
                     <input type="text" id="can-ifname" value="can0">
                 </div>
             </div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                 <div>
-                    <label style="font-size:11px;">Bitrate (bps):</label>
+                    <label for="can-br" style="font-size:11px;">Bitrate (bps):</label>
                     <select id="can-br"><option value="1000000">1000000 (1M)</option><option value="500000">500000 (500K)</option></select>
                 </div>
                 <div>
-                    <label style="font-size:11px;">txqueuelen:</label>
+                    <label for="can-tx" style="font-size:11px;">txqueuelen:</label>
                     <select id="can-tx"><option value="1024">1024 (无脑使用)</option><option value="512">512 (减少TTC)</option><option value="256">256 (社区推荐)</option><option value="128">128 (Klipper建议值)</option></select>
                 </div>
             </div>
