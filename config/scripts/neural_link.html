@@ -50,7 +50,8 @@
         .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 12px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 14px; transition: 0.3s; }
         .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
         input, select { background: #000; border: 1px solid var(--neon); color: var(--neon); padding: 12px; outline: none; font-family: inherit; }
-
+        .doc-section { margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; color: #aaa; }
+        .user-mark { color: var(--highlight); color: #ff0000; }
         .log-terminal { background: #000; color: #00ff41; padding: 10px; height: 150px; overflow-y: auto; font-size: 11px; border: 1px solid #222; margin-top: 15px; white-space: pre-wrap; }
         .error-hint { color: var(--danger); font-size: 11px; margin-top: -5px; margin-bottom: 10px; font-weight: bold; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -152,6 +153,52 @@
                 <button class="btn" style="border-color:var(--success); color:var(--success)" onclick="startBackup()">[ 立即执行备份 ]</button>
             </div>
             <div class="log-terminal" id="git-terminal">终端就绪，等待指令...</div>
+            <div class="doc-section">
+                <p>(注意：以下方法中已标记<span class="user-mark">红色</span>的代码段需替换为你自己的信息)</p>
+                <details>
+                    <summary>������ GitHub SSH 密钥配置指南 (初次使用必看)</summary>
+                    <p>1. 终端执行配置并生成 Key:</p>
+                    <div class="code-block">
+                        git config --global user.name "<span class="user-mark">Samuel Wang</span>" && \<br>
+                        git config --global user.email "<span class="user-mark">imhsaw@gmail.com</span>" && \<br>
+                        ssh-keygen -t rsa -C "<span class="user-mark">imhsaw@gmail.com</span>" && \<br>
+                        cat ~/.ssh/id_rsa.pub
+                    </div>
+                    <p>2. 复制上方打印的内容。<br>前往 GitHub -> Settings -> SSH and GPG keys -> New SSH Key，粘贴并保存。</p>
+                </details>
+
+                <details>
+                    <summary>������️ 第一次备份</summary>
+                    <p>1. 初始化文件夹（以前没有做过Git备份）:</p>
+                    <div class="code-block">
+                        cd ~/printer_data && git init && \<br>
+                        git branch -m main && \<br>
+                        git remote add origin git@github.com:<span class="user-mark">Samuel-0-0/Voron_2.4_350_config</span>.git
+                    </div>
+                    <p>2. 导入证书:</p>
+                    <div class="code-block">
+                        cd ~/printer_data && ssh -T git@github.com
+                    </div>
+                    <p>3. 手动执行一次备份:</p>
+                    <div class="code-block">
+                        1）git add . -v<br>
+                        2）git commit -m "first commit"<br>
+                        3）git push -u origin main<br>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>������ 新系统恢复与迁移配置（已经有远程备份时）</summary>
+                    <p>1. 恢复备份的 SSH 密钥后执行权限修正:</p>
+                    <div class="code-block">chmod 600 ~/.ssh/id_rsa && chmod 644 ~/.ssh/id_rsa.pub</div>
+                    <p>2. 克隆配置并重新关联:</p>
+                    <div class="code-block">
+                        1）git clone https://github.com/<span class="user-mark">Samuel-0-0/voron_350_klipper_config</span>.git ~/printer_data<br>
+                        2）git config --global user.name "<span class="user-mark">Samuel Wang</span>" && git config --global user.email "<span class="user-mark">imhsaw@gmail.com</span>"<br>
+                        3）cd ~/printer_data && git remote set-url origin git@github.com:<span class="user-mark">Samuel-0-0/Voron_2.4_350_config</span>.git && ssh -T git@github.com
+                    </div>
+                </details>
+            </div>
         </div>
     </div>
 </div>
@@ -163,7 +210,7 @@
         const ip = document.getElementById('ip').value;
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         ws = new WebSocket(`${protocol}//${ip}:1111/ws`);
-        ws.onopen = () => { document.getElementById('status').innerText = "LINK: ONLINE"; document.getElementById('status').style.color = "var(--success)"; };
+        ws.onopen = () => { document.getElementById('status').innerText = "LINK: ONLINE"; document.getElementById('status').style.color = "var(--success)"; sideErr.innerText = ""; return;};
         ws.onmessage = (e) => handleData(JSON.parse(e.data));
     }
     function openPanel(name) {
