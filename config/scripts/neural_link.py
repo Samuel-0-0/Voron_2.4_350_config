@@ -48,6 +48,67 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"])
 
+class GitManager:
+    @staticmethod
+    def get_versions():
+        def get_commit(path):
+            try:
+                p = os.path.expanduser(path)
+                return subprocess.check_output(["git", "rev-parse", "--short=7", "HEAD"], cwd=p).decode().strip()
+            except: return "unknown"
+        k = f"Klipper:{get_commit('~/klipper')}"
+        m = f"Moonraker:{get_commit('~/moonraker')}"
+        ms_ver = "Mainsail:unknown"
+        ms_path = os.path.expanduser('~/mainsail/.version')
+        if os.path.exists(ms_path):
+            try:
+                with open(ms_path, 'r') as f: ms_ver = f"Mainsail:{f.readline().strip()}"
+            except: pass
+        return f"{k},{m},{ms_ver}"
+
+    @staticmethod
+    async def run_backup(websocket, config_path, commit_msg, max_retries=10):
+        path = os.path.expanduser(config_path)
+        ver_info = GitManager.get_versions()
+        
+        async def send_log(msg):
+            await websocket.send_json({"type": "git_log", "data": msg})
+
+        try:
+            # 1. Pull
+            await send_log("开始拉取远程仓库更新...")
+            for i in range(max_retries):
+                try:
+                    subprocess.check_call(["git", "pull", "-v"], cwd=path, timeout=60)
+                    break
+                except:
+                    if i == max_retries - 1: raise Exception("Git Pull 达到最大重试次数，操作终止")
+                    await send_log(f"拉取失败，准备第 {i+2} 次尝试...")
+
+            # 2. Add & Commit
+            await send_log("扫描并合并本地更改...")
+            subprocess.check_call(["git", "add", "."], cwd=path)
+            changes = subprocess.check_output(["git", "status", "--porcelain"], cwd=path).decode().strip()
+            if changes:
+                full_msg = f"{commit_msg} [{ver_info}]"
+                subprocess.check_call(["git", "commit", "-m", full_msg], cwd=path)
+                await send_log(f"本地提交完成: {full_msg}")
+            else:
+                await send_log("检测到本地无任何更改，跳过提交")
+
+            # 3. Push
+            await send_log("正在推送到 GitHub 远程仓库...")
+            for i in range(max_retries):
+                try:
+                    subprocess.check_call(["git", "push"], cwd=path, timeout=60)
+                    await send_log("✅ 备份任务执行成功！")
+                    break
+                except:
+                    if i == max_retries - 1: raise Exception("Git Push 失败，请检查 SSH Key 或网络")
+                    await send_log(f"推送失败，准备第 {i+2} 次尝试...")
+        except Exception as e:
+            await send_log(f"❌ 错误: {str(e)}")
+
 class DiagnosticTool:
     @staticmethod
     def run_cmd(cmd, sudo_pwd=None):
@@ -218,6 +279,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 r1 = DiagnosticTool.run_cmd("systemctl restart systemd-networkd", pwd)
                 r2 = DiagnosticTool.run_cmd("systemctl restart networking", pwd)
                 await websocket.send_json({"type": "can_log", "data": f"重启指令执行结果:\n{r1}\n{r2}"})
+            elif action == "git_backup": 
+                await GitManager.run_backup(websocket, "~/printer_data", params.get("msg", "Web Auto Backup"))
         except: break
 
 if __name__ == "__main__":
