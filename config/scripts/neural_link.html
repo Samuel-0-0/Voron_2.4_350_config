@@ -72,6 +72,7 @@
         <button class="btn" onclick="openPanel('usb')">USB 拓扑检查</button>
         <button class="btn" onclick="openPanel('emmc')">eMMC 寿命检查</button>
         <button class="btn" onclick="openPanel('can')">CANBus 配置</button>
+        <button class="btn" style="border-color:var(--warn); color:var(--warn)" onclick="openPanel('git')">GitHub 云备份</button>
     </div>
 
     <div class="main-view">
@@ -141,6 +142,17 @@
             </div>
             <div class="log-terminal" id="can-terminal">终端就绪</div>
         </div>
+        <div class="panel" id="panel-git">
+            <div class="panel-title"><span>GitHub 配置云同步备份</span></div>
+            <div style="font-size:13px; color:#888; margin-bottom:15px;">
+                此操作将备份 <span style="color:var(--neon)">~/printer_data</span> 目录至关联的远程仓库。备份说明会自动附带 Klipper/Moonraker 版本号。
+            </div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="git-msg" placeholder="输入更新说明 (默认: Web Auto Backup)" style="flex:1">
+                <button class="btn" style="border-color:var(--success); color:var(--success)" onclick="startBackup()">[ 立即执行备份 ]</button>
+            </div>
+            <div class="log-terminal" id="git-terminal">终端就绪，等待指令...</div>
+        </div>
     </div>
 </div>
 
@@ -149,7 +161,7 @@
     function connect() {
         const ip = document.getElementById('ip').value;
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        ws = new WebSocket(`${protocol}//${ip}:8765/ws`);
+        ws = new WebSocket(`${protocol}//${ip}:1111/ws`);
         ws.onopen = () => { document.getElementById('status').innerText = "LINK: ONLINE"; document.getElementById('status').style.color = "var(--success)"; };
         ws.onmessage = (e) => handleData(JSON.parse(e.data));
     }
@@ -159,6 +171,11 @@
         document.getElementById('panel-' + name).style.display = 'block';
         if(name === 'can') ws.send(JSON.stringify({action: 'can_status'}));
         else ws.send(JSON.stringify({action: name}));
+    }
+    function startBackup() {
+        const msg = document.getElementById('git-msg').value || "Web Auto Backup";
+        document.getElementById('git-terminal').innerHTML = `[${new Date().toLocaleTimeString()}] 正在初始化 Git 备份流程...`;
+        ws.send(JSON.stringify({action: 'git_backup', params: { msg }}));
     }
     function applyCan() {
         const pwd = document.getElementById('can-pwd').value;
@@ -225,6 +242,11 @@
         }
         if(res.type === 'can_log') {
             const term = document.getElementById('can-terminal');
+            term.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${res.data}`;
+            term.scrollTop = term.scrollHeight;
+        }
+        if(res.type === 'git_log') {
+            const term = document.getElementById('git-terminal');
             term.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${res.data}`;
             term.scrollTop = term.scrollHeight;
         }
