@@ -9,10 +9,25 @@ PRINTER_SCRIPTS="/home/$USER/printer_data/config/scripts"
 HTML_NAME="neural_link.html"
 PY_NAME="neural_link.py"
 
-# 2. 依赖环境检查与安装
-echo "▶ 正在检查并安装 Python 依赖库..."
-pip3 install --upgrade pip
-pip3 install fastapi 'uvicorn[standard]' uvicorn psutil
+# 2. 依赖环境检查与安装 (优化：先检查后安装)
+echo "▶ 正在检查 Python 依赖库..."
+
+# 定义需要检查的依赖列表
+DEPENDENCIES=("fastapi" "uvicorn" "psutil")
+
+for pkg in "${DEPENDENCIES[@]}"; do
+    if python3 -m pip show "$pkg" > /dev/null 2>&1; then
+        echo "$  pkg 已安装，跳过。"
+    else
+        echo "  未检测到 $pkg，正在安装..."
+        # 针对 uvicorn 安装标准版以包含 websockets 驱动
+        if [ "$pkg" == "uvicorn" ]; then
+            python3 -m pip install "uvicorn[standard]"
+        else
+            python3 -m pip install "$pkg"
+        fi
+    fi
+done
 
 # 3. 自动获取本机局域网 IP
 HOST_IP=$(hostname -I | awk '{print $1}')
