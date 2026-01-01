@@ -38,6 +38,8 @@
         .fw-badge { font-size: 11px; padding: 1px 5px; border-radius: 2px; font-weight: bold; color: #000; }
         .fw-KLIPPER { background: var(--success); }
         .fw-KATAPULT { background: var(--warn); }
+        .fw-CAN_ADAPTER { background: var(--neon); }
+        .fw-DFU { background: var(--danger); }
         .sn-tag { font-size: 12px; color: #666; background: rgba(255,255,255,0.05); padding: 2px 6px; }
 
         /* eMMC 进度条样式 */
@@ -204,8 +206,8 @@
                         <div class="node-row">
                             <span style="border:1px solid var(--neon); font-size:10px; padding:0 4px;">${n.type}</span>
                             <span>${n.name}</span>
-                            ${n.fw ? `<span class="fw-badge fw-${n.fw}">${n.fw}</span>` : ''}
-                            <span class="sn-tag">SN: ${n.serial}</span>
+                            ${n.fw.map(tag => `<span class="fw-badge fw-${tag}">${tag.replace('_', ' ')}</span>`).join('')}
+                            ${n.serial !== 'N/A' ? `<span class="sn-tag">SN: ${n.serial}</span>` : ''}
                             <span style="margin-left:auto; color:${n.score>85?'var(--success)':'var(--danger)'}">${n.score}分</span>
                         </div>
                         ${buildTree(nodes, n.id)}

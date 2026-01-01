@@ -143,15 +143,26 @@ class DiagnosticTool:
                 product = DiagnosticTool.read_sys_file(f"{dev_path}/product") or ("USB Hub" if is_hub else "Unknown Device")
                 mfg = DiagnosticTool.read_sys_file(f"{dev_path}/manufacturer")
                 serial = DiagnosticTool.read_sys_file(f"{dev_path}/serial") or "N/A"
-                
-                fw = ""
-                combined = (product + mfg).lower()
-                if "klipper" in combined: fw = "KLIPPER"
-                elif any(x in combined for x in ["katapult", "canboot"]): fw = "KATAPULT"
-                
+                vid = DiagnosticTool.read_sys_file(f"{dev_path}/idVendor")
+                pid = DiagnosticTool.read_sys_file(f"{dev_path}/idProduct")
+
+                tags = []
+                full_desc = f"{mfg} {product}".lower()
+
+                if "klipper" in full_desc:
+                    tags.append("KLIPPER")
+                if any(x in full_desc for x in ["katapult", "canboot"]):
+                    tags.append("KATAPULT")
+                # 通过硬件 ID 精确匹配 CAN 适配器 (1d50:606f)
+                if vid == "1d50" and pid == "606f":
+                    tags.append("CAN_ADAPTER")
+                # 通过硬件 ID 精确匹配 MCU处于DFU (0483:df11)
+                if vid == "0483" and pid == "df11":
+                    tags.append("DFU")
+
                 depth = name.count('.') + 1
                 pid = name.rsplit('.', 1)[0] if '.' in name else name.split('-')[0] + "-0"
-                nodes.append({"id": name, "pid": pid, "type": "HUB" if is_hub else "设备", "name": product, "fw": fw, "serial": serial, "score": max(0, 100-(depth-1)*10)})
+                nodes.append({"id": name, "pid": pid, "type": "HUB" if is_hub else "设备", "name": product, "fw": tags, "serial": serial, "score": max(0, 100-(depth-1)*10)})
             except: continue
         return {"nodes": nodes}
 
