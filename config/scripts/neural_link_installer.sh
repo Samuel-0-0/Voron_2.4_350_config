@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
 # 1. 自动获取当前用户名和路径
 USER=$(whoami)
 PRINTER_SCRIPTS="/home/$USER/printer_data/config/scripts"
@@ -9,7 +12,7 @@ PY_NAME="neural_link.py"
 # 2. 依赖环境检查与安装
 echo "▶ 正在检查并安装 Python 依赖库..."
 pip3 install --upgrade pip
-pip3 install fastapi uvicorn psutil
+pip3 install fastapi 'uvicorn[standard]' uvicorn psutil
 
 # 3. 自动获取本机局域网 IP
 HOST_IP=$(hostname -I | awk '{print $1}')
