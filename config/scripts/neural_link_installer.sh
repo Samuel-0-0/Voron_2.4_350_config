@@ -13,18 +13,19 @@ PY_NAME="neural_link.py"
 echo "▶ 正在检查 Python 依赖库..."
 
 # 定义需要检查的依赖列表
-DEPENDENCIES=("fastapi" "uvicorn" "psutil")
+DEPENDENCIES=("fastapi" "uvicorn" "psutil" "websockets")
 
 for pkg in "${DEPENDENCIES[@]}"; do
-    if python3 -m pip show "$pkg" > /dev/null 2>&1; then
-        echo "$  pkg 已安装，跳过。"
+    # 尝试导入库来验证其在当前 python3 环境中是否真正可用
+    if python3 -c "import $pkg" > /dev/null 2>&1; then
+        echo "  $pkg 已就绪。"
     else
-        echo "  未检测到 $pkg，正在安装..."
-        # 针对 uvicorn 安装标准版以包含 websockets 驱动
-        if [ "$pkg" == "uvicorn" ]; then
-            python3 -m pip install "uvicorn[standard]"
+        echo "  $pkg 不可用，正在尝试安装..."
+        # 强制安装到当前用户环境，并确保安装 uvicorn[standard]
+        if [ "$pkg" == "uvicorn" ] || [ "$pkg" == "websockets" ]; then
+            python3 -m pip install --user "uvicorn[standard]" websockets
         else
-            python3 -m pip install "$pkg"
+            python3 -m pip install --user "$pkg"
         fi
     fi
 done
