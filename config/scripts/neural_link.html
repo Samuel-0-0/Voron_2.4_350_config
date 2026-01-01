@@ -15,7 +15,8 @@
         
         .panel { display: none; background: var(--panel-bg); border: 1px solid rgba(0, 243, 255, 0.2); padding: 20px; }
         .panel-title { font-family: 'Orbitron', sans-serif; font-size: 17px; margin-bottom: 15px; border-left: 5px solid var(--neon); padding-left: 12px; display: flex; justify-content: space-between; }
-        
+        #welcome-panel { display: block; border: 1px dashed var(--neon); text-align: center; padding: 60px 20px; color: rgba(0, 243, 255, 0.6); }
+
         /* CPU 核心视图 */
         .cpu-grid { display: flex; gap: 8px; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 4px; border: 1px solid #111; margin-bottom: 15px; }
         .core-slot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -74,6 +75,10 @@
     </div>
 
     <div class="main-view">
+        <div class="panel" id="welcome-panel">
+            <div style="font-size: 40px; margin-bottom: 20px;">⚡</div>
+            <div id="welcome-text">请先建立隧道连接，然后点击左侧需要的功能</div>
+        </div>
         <div class="panel" id="panel-cpu">
             <div class="panel-title"><span>CPU 异构核心分配视图</span><span id="cpu-strat" style="font-size: 12px; opacity: 0.5;">--</span></div>
             <div id="cpu-grid" class="cpu-grid"></div>
