@@ -14,6 +14,23 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"])
 
 class GitManager:
     @staticmethod
+    def find_git_repo(base_path):
+        """
+        动态探测 .git 文件夹位置
+        优先级：1. base_path 本身 2. base_path/config
+        """
+        expanded_base = os.path.expanduser(base_path)
+        search_targets = [
+            expanded_base,
+            os.path.join(expanded_base, "config")
+        ]
+        
+        for target in search_targets:
+            if os.path.isdir(os.path.join(target, ".git")):
+                return target
+        return expanded_base  # 兜底返回原路径
+
+    @staticmethod
     def get_versions():
         def get_commit(path):
             try:
@@ -243,8 +260,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 r1 = DiagnosticTool.run_cmd("systemctl restart systemd-networkd", pwd)
                 r2 = DiagnosticTool.run_cmd("systemctl restart networking", pwd)
                 await websocket.send_json({"type": "can_log", "data": f"重启指令执行结果:\n{r1}\n{r2}"})
-            elif action == "git_backup": 
-                await GitManager.run_backup(websocket, "~/printer_data", params.get("msg", "Web Auto Backup"))
+            elif action == "git_backup":
+                base_path = "~/printer_data"
+                detected_path = GitManager.find_git_repo(base_path)
+                await GitManager.run_backup(websocket, detected_path, params.get("msg", "Web Auto Backup"))
         except: break
 
 if __name__ == "__main__":
