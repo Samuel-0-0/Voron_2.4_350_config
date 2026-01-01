@@ -6,7 +6,12 @@ PRINTER_SCRIPTS="/home/$USER/printer_data/config/scripts"
 HTML_NAME="neural_link.html"
 PY_NAME="neural_link.py"
 
-# 2. 自动获取本机局域网 IP
+# 2. 依赖环境检查与安装
+echo "▶ 正在检查并安装 Python 依赖库..."
+pip3 install --upgrade pip
+pip3 install fastapi uvicorn psutil
+
+# 3. 自动获取本机局域网 IP
 HOST_IP=$(hostname -I | awk '{print $1}')
 
 if [ -z "$HOST_IP" ]; then
@@ -16,7 +21,7 @@ fi
 
 echo "探测到本机 IP: $HOST_IP"
 
-# 3. 探测 Web 目录
+# 4. 探测 Web 目录
 if [ -d "/home/$USER/mainsail" ]; then
     WEB_PATH="/home/$USER/mainsail"
 elif [ -d "/home/$USER/fluidd" ]; then
@@ -33,7 +38,7 @@ fi
 echo "▶ Web 路径: $WEB_PATH"
 echo "▶ 脚本路径: $PRINTER_SCRIPTS"
 
-# 4. 创建目录并下载文件
+# 5. 创建目录并下载文件
 mkdir -p "$PRINTER_SCRIPTS"
 
 echo "▶ 正在下载后端脚本 (neural_link.py)..."
@@ -42,18 +47,21 @@ curl -s -L -o "$PRINTER_SCRIPTS/$PY_NAME" https://raw.githubusercontent.com/Samu
 echo "▶ 正在下载前端页面 (neural_link.html)..."
 curl -s -L -o "$WEB_PATH/$HTML_NAME" https://raw.githubusercontent.com/Samuel-0-0/Voron_2.4_350_config/main/config/scripts/neural_link.html
 
-# 5. 修改默认 IP
+# 6. 修改 HTML 中的默认 IP 为本机探测到的 IP
 sed -i "s/value=\"192.168.88.20\"/value=\"$HOST_IP\"/g" "$WEB_PATH/$HTML_NAME"
 
-# 6. 后台启动服务
+# 7. 后台启动服务
 echo "▶ 正在启动诊断服务..."
 chmod +x "$PRINTER_SCRIPTS/$PY_NAME"
+# 杀掉旧进程
 pkill -f "$PY_NAME" > /dev/null 2>&1
 
+# 使用 nohup 后台运行并确保进程在 Shell 退出后不中断
 nohup python3 "$PRINTER_SCRIPTS/$PY_NAME" > /tmp/neural_link.log 2>&1 &
 
-# 7. 最终提醒
+# 8. 最终提醒
 echo "===================================================="
 echo "▶ 部署成功！"
 echo "▶ 请访问: http://$HOST_IP/$HTML_NAME"
+echo "▶ 日志查看: tail -f /tmp/neural_link.log"
 echo "===================================================="

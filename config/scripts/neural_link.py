@@ -1,42 +1,6 @@
 import subprocess
 import sys
 import os
-
-# --- 依赖项自动审计与静默安装模块 ---
-required_packages = {
-    "fastapi": "fastapi",
-    "uvicorn": "uvicorn",
-    "psutil": "psutil"
-}
-
-def check_and_install_dependencies():
-    print("正在扫描系统环境...")
-    for import_name, install_name in required_packages.items():
-        try:
-            __import__(import_name)
-        except ImportError:
-            print(f"发现缺失核心插件: {install_name}，准备自动部署...")
-            try:
-                # 使用 sys.executable 确保安装到当前运行环境
-                subprocess.check_call([sys.executable, "-m", "pip", "install", install_name])
-                print(f"{install_name} 部署成功。")
-            except subprocess.CalledProcessError as e:
-                print("\n" + "!"*50)
-                print(f"严重错误: 插件 [{install_name}] 安装失败！")
-                print(f"原因: 进程返回非零退出代码 {e.returncode}")
-                print("-" * 50)
-                print("请尝试手动执行以下操作:")
-                print(f"  pip install {install_name}")
-                print("!"*50 + "\n")
-                sys.exit(1)
-            except Exception as e:
-                print(f"发生未知异常: {str(e)}")
-                sys.exit(1)
-
-# 执行审计逻辑
-check_and_install_dependencies()
-# -----------------------------------
-
 import asyncio
 import json
 import re
